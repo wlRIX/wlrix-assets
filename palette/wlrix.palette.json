@@ -1,0 +1,17 @@
+{
+  "$comment": "Canonical wlRIX color palette (IRIX Indigo Magic). Source of truth for both the Rust compositor/greeter and the C# Avalonia theme. Values are placeholders to be tuned against reference screenshots.",
+  "name": "wlRIX Indigo Magic",
+  "version": "0.0.0",
+  "colors": {
+    "background": "#5c6b8a",
+    "desktop": "#3a4a63",
+    "windowFrame": "#8a8a8a",
+    "windowFrameActive": "#b0b0b0",
+    "text": "#000000",
+    "textInverse": "#ffffff",
+    "highlight": "#204080",
+    "shadow": "#2a2a2a",
+    "bevelLight": "#e0e0e0",
+    "bevelDark": "#404040"
+  }
+}
