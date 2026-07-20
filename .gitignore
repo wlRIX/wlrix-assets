@@ -1,1 +1,6 @@
 /target
+.idea/
+
+# .NET tool
+[Bb]in/
+[Oo]bj/
