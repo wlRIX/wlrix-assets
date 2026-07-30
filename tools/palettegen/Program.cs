@@ -93,6 +93,22 @@ else
     Console.Error.WriteLine($"palettegen: {Rel(root, greeterSrc)} not found; skipped greeter output");
 }
 
+// The desktop-icons client draws no widgets, only tinted icons and labels, so it takes a
+// short list of its own -- including the icon tints, which nothing else binds.
+var desktopSrc = Path.Combine(root, "wlrix-desktop", "src");
+if (Directory.Exists(desktopSrc))
+{
+    var themeDir = Path.Combine(desktopSrc, "theme");
+    Directory.CreateDirectory(themeDir);
+    var desktop = Path.Combine(themeDir, "palette.rs");
+    File.WriteAllText(desktop, Emit.RustDesktop(standard));
+    Console.WriteLine($"  {Rel(root, desktop)}");
+}
+else
+{
+    Console.Error.WriteLine($"palettegen: {Rel(root, desktopSrc)} not found; skipped desktop output");
+}
+
 return 0;
 
 static string Rel(string root, string path) =>

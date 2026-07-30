@@ -92,9 +92,23 @@ ROLES = {
     "titleInactive":        "wmBackground",              # *client*background
     "titleInactiveText":    "wmForeground",
     "desktop":              "imdDarkGrey",               # *newBackground0
+    # The greeter's steel-blue backdrop, as IRIX's clogin had.
+    "loginBackground":      "imdCltnPanelColor",
     # Lock screen. Deliberately black rather than the desktop color, so a
     # locked output never resembles a live session.
     "locked":               "imdBlack",
+
+    # --- desktop icons (wlrix-desktop) ---
+    # An icon is drawn as a coverage mask and tinted by its state, the way the
+    # Indigo Magic desktop did: resting icons are knocked back so the desktop
+    # reads as a whole, the one under the pointer comes up to full white, and
+    # the selected one takes the same yellow IRIX used for a lit indicator.
+    "iconTint":             "imdLightGrey",
+    "iconTintHover":        "imdWhite",
+    "iconTintSelected":     "selectFillColor",           # *lampColor
+    # The filename under the icon. Selected labels invert onto the tint.
+    "iconLabel":            "imdWhite",
+    "iconLabelSelected":    "imdBlack",
 
     # --- status / links ---
     "error":                "errorColor",
