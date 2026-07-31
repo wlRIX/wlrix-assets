@@ -150,6 +150,10 @@ public static class Emit
         ("FACE",                "face"),
         ("FACE_TOP_SHADOW",     "faceTopShadow"),
         ("FACE_BOTTOM_SHADOW",  "faceBottomShadow"),
+        // The right-click menu. `titleActive` is the same olive the compositor highlights a
+        // menu row with, so the two menus point at one colour rather than drifting apart.
+        ("FOREGROUND",          "foreground"),
+        ("MENU_HIGHLIGHT",      "titleActive"),
     ];
 
     /// <summary>
