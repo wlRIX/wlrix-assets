@@ -110,6 +110,12 @@ ROLES = {
     "iconLabel":            "imdWhite",
     "iconLabelSelected":    "imdBlack",
 
+    # --- window chrome ---
+    # The wireframe drawn while a window is moved or resized non-opaquely: a
+    # red outline of where the frame would land. IRIX drew it in plain red on
+    # the root window, which is what `redColor` is.
+    "dragOutline":          "redColor",
+
     # --- status / links ---
     "error":                "errorColor",
     "warning":              "warningColor",

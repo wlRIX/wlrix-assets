@@ -102,6 +102,7 @@ public static class Emit
         ("BOTTOM_SHADOW",       "faceBottomShadow"),
         ("OUTER_LINE",          "outerLine"),
         ("FOREGROUND",          "foreground"),
+        ("DRAG_OUTLINE",        "dragOutline"),
     ];
 
     /// <summary>

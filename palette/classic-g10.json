@@ -147,6 +147,7 @@
     "iconTintSelected": "selectFillColor",
     "iconLabel": "imdWhite",
     "iconLabelSelected": "imdBlack",
+    "dragOutline": "redColor",
     "error": "errorColor",
     "warning": "warningColor",
     "information": "informationColor",
