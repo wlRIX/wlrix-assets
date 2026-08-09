@@ -46,6 +46,13 @@ empty; when it is filled it will want the XDG icon-theme layout under `share/ico
 legacy X11 names (`left_ptr`, `xterm`, `watch`), the MD5-named ones toolkits use for drag-and-drop, and the modern CSS
 names (`default`, `ns-resize`, `grabbing`). The install preserves the links as links rather than copying through them.
 
+**The eight resize cursors are directional**, as IRIX drew them: `top_left_corner` points up-left, `bottom_right_corner`
+points down-right, and the four sides are an arrow against a bar. So `nw-resize` … `se-resize` and `n-resize` …
+`w-resize` each alias the drawing for *that* corner or edge, which is how DMZ — the freedesktop reference theme — maps
+them too. As imported, `n-resize` and `e-resize` pointed at the symmetric double-headed arrows (`size_ver`, `size_hor`)
+instead; those two names now follow DMZ, and the symmetric drawings keep the `ns-resize`/`ew-resize` names, which is
+what an axis with no near end actually means.
+
 `wlrix-compositor`'s system default config names this theme and its size, and the compositor hands both to clients
 through the session, so the pointer is the same one over the desktop, over a GTK window and over XWayland. Which shape
 is drawn for a given `wl_pointer.set_cursor` or `cursor-shape-v1` request is the compositor's business — see its README.
