@@ -1,0 +1,5 @@
+[Icon Theme]
+Name=sgi
+Comment=The IRIX pointer set
+Example=default
+Inherits=core

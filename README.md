@@ -11,7 +11,7 @@ everything renders identically.
 |---------------|-------------------------------------------------------------------|
 | `palette/`    | Canonical color palette — the single source of truth for theming. |
 | `icons/`      | Icon theme (IRIX Indigo Magic icon set).                          |
-| `cursors/`    | Cursor theme.                                                     |
+| `cursors/`    | Cursor theme (`sgi`, the IRIX pointer set).                       |
 | `wallpapers/` | Default wallpapers / backgrounds.                                 |
 
 ## Installing
@@ -20,14 +20,39 @@ everything renders identically.
 sudo just install    # or `just install-assets` from wlrix-epoch
 ```
 
-Only `wallpapers/` is installed, to `$PREFIX/share/wlrix/wallpapers/`. `wlrix-bg`'s system default config names
-`scatter.png` there by absolute path, so a machine without this installed comes up with a plain gray desktop and a line
-in the session log about the missing file.
+Two directories are installed, to two different places:
+
+| Directory     | Installed to                      | Who reads it                                                              |
+|---------------|-----------------------------------|---------------------------------------------------------------------------|
+| `wallpapers/` | `$PREFIX/share/wlrix/wallpapers/` | `wlrix-bg`, by absolute path from its system default config.              |
+| `cursors/sgi` | `$PREFIX/share/icons/sgi/`        | every XCursor loader, by theme *name*: the compositor, GTK, Qt, XWayland. |
+
+A machine without the wallpapers comes up with a plain gray desktop and a line in the session log about the missing
+file. Without the cursor theme the pointer falls back to whatever theme the machine already has — usually Adwaita — and
+the compositor says so in its log.
+
+The cursor theme goes under `share/icons/` rather than `share/wlrix/` because that is the only place it would be found:
+libXcursor, libwayland-cursor and the `xcursor` crate the compositor uses all search `XDG_DATA_DIRS/icons`, `~/.icons`
+and a couple of legacy paths, and nothing can point them at a private directory except `XCURSOR_PATH`. **A prefix other
+than `/usr` therefore needs `XCURSOR_PATH` to include `$PREFIX/share/icons`**, which `install` says on the way out.
 
 `palette/` is deliberately not installed: it is a *build* input, resolved ahead of time by `tools/palettegen` into
-native sources that are checked in to the consuming repos, so that nothing parses it at runtime. `icons/` and
-`cursors/` are empty; when they are filled they will want the XDG icon-theme and XCursor layouts under `share/icons/`,
-which is where the loaders actually look, rather than this directory.
+native sources that are checked in to the consuming repos, so that nothing parses it at runtime. `icons/` is still
+empty; when it is filled it will want the XDG icon-theme layout under `share/icons/`, the same way the cursors do.
+
+## Cursors
+
+`cursors/sgi/` is the IRIX pointer set as an XCursor theme: 49 cursors at 32×32, plus 72 symlinked aliases covering the
+legacy X11 names (`left_ptr`, `xterm`, `watch`), the MD5-named ones toolkits use for drag-and-drop, and the modern CSS
+names (`default`, `ns-resize`, `grabbing`). The install preserves the links as links rather than copying through them.
+
+`wlrix-compositor`'s system default config names this theme and its size, and the compositor hands both to clients
+through the session, so the pointer is the same one over the desktop, over a GTK window and over XWayland. Which shape
+is drawn for a given `wl_pointer.set_cursor` or `cursor-shape-v1` request is the compositor's business — see its README.
+
+The theme carries **only 32×32 images**, which is why the default config asks for size 32: a client told 24 would
+resample the 32-pixel artwork and lose the hard IRIX edges. On a HiDPI screen the compositor scales it up rather than
+picking a larger frame, because there is not one.
 
 ## Palette
 
