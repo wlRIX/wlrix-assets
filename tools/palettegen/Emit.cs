@@ -83,96 +83,6 @@ public static class Emit
         ("WlrixReadWritePanel",       "readWritePanel"),
     ];
 
-    /// <summary>
-    /// Rust constants. Window chrome and the desktop live on the compositor
-    /// side, so the title roles are emitted here and not into the Avalonia
-    /// scheme, where nothing would bind them.
-    /// </summary>
-    private static readonly (string Name, string Role)[] RustConsts =
-    [
-        ("DESKTOP",             "desktop"),
-        ("LOCKED",              "locked"),
-        ("TITLE_ACTIVE",        "titleActive"),
-        ("TITLE_ACTIVE_TEXT",   "titleActiveText"),
-        ("TITLE_INACTIVE",      "titleInactive"),
-        ("TITLE_INACTIVE_TEXT", "titleInactiveText"),
-        ("PANEL",               "panel"),
-        ("FACE",                "face"),
-        ("TOP_SHADOW",          "faceTopShadow"),
-        ("BOTTOM_SHADOW",       "faceBottomShadow"),
-        ("OUTER_LINE",          "outerLine"),
-        ("FOREGROUND",          "foreground"),
-        ("DRAG_OUTLINE",        "dragOutline"),
-    ];
-
-    /// <summary>
-    /// What the greeter draws with. A superset of the compositor's list, because a
-    /// whole Motif dialog needs every shadow pair rather than just the window chrome.
-    /// </summary>
-    private static readonly (string Name, string Role)[] GreeterConsts =
-    [
-        ("LOGIN_BACKGROUND",     "loginBackground"),
-        ("PANEL",                "panel"),
-        ("PANEL_TOP_SHADOW",     "panelTopShadow"),
-        ("PANEL_BOTTOM_SHADOW",  "panelBottomShadow"),
-        ("FACE",                 "face"),
-        ("FACE_TOP_SHADOW",      "faceTopShadow"),
-        ("FACE_BOTTOM_SHADOW",   "faceBottomShadow"),
-        ("ARMED",                "armed"),
-        ("TEXT_FIELD",           "textFieldBackground"),
-        ("TEXT_TOP_SHADOW",      "textTopShadow"),
-        ("TEXT_BOTTOM_SHADOW",   "textBottomShadow"),
-        ("LIST_BACKGROUND",      "listBackground"),
-        ("TROUGH",               "trough"),
-        ("TROUGH_TOP_SHADOW",    "troughTopShadow"),
-        ("TROUGH_BOTTOM_SHADOW", "troughBottomShadow"),
-        ("SCROLL_BAR_CONTROL",   "scrollBarControl"),
-        ("FOREGROUND",           "foreground"),
-        ("DISABLED_FOREGROUND",  "disabledForeground"),
-        ("SELECTION_BACKGROUND", "selectionBackground"),
-        ("SELECTION_FOREGROUND", "selectionForeground"),
-        ("SELECT_FILL",          "selectFill"),
-        ("OUTER_LINE",           "outerLine"),
-    ];
-
-    /// <summary>
-    /// What the desktop-icons client draws with. Much shorter than the greeter's list:
-    /// it draws no Motif widgets, only tinted icons and their labels on the bare desktop.
-    /// </summary>
-    private static readonly (string Name, string Role)[] DesktopConsts =
-    [
-        ("DESKTOP",             "desktop"),
-        ("ICON_TINT",           "iconTint"),
-        ("ICON_TINT_HOVER",     "iconTintHover"),
-        ("ICON_TINT_SELECTED",  "iconTintSelected"),
-        ("ICON_LABEL",          "iconLabel"),
-        ("ICON_LABEL_SELECTED", "iconLabelSelected"),
-        ("OUTER_LINE",          "outerLine"),
-        ("FACE",                "face"),
-        ("FACE_TOP_SHADOW",     "faceTopShadow"),
-        ("FACE_BOTTOM_SHADOW",  "faceBottomShadow"),
-        // The right-click menu. `titleActive` is the same olive the compositor highlights a
-        // menu row with, so the two menus point at one colour rather than drifting apart.
-        ("FOREGROUND",          "foreground"),
-        ("MENU_HIGHLIGHT",      "titleActive"),
-    ];
-
-    /// <summary>
-    /// Metrics the greeter draws to, as (Rust name, flattened JSON key).
-    /// </summary>
-    private static readonly (string Name, string Key)[] GreeterMetrics =
-    [
-        ("SHADOW_DEFAULT",          "shadowThickness.default"),
-        ("SHADOW_SCROLL_BAR",       "shadowThickness.scrollBar"),
-        ("SHADOW_SCROLLED_WINDOW",  "shadowThickness.scrolledWindow"),
-        ("SHADOW_LIST",             "shadowThickness.list"),
-        ("SHADOW_TEXT",             "shadowThickness.text"),
-        ("SCROLL_BAR_SIZE",         "scrollBarSize"),
-        ("INDICATOR_SIZE",          "indicatorSize"),
-        ("TEXT_MARGIN_HEIGHT",      "textMargin.height"),
-        ("TEXT_MARGIN_WIDTH",       "textMargin.width"),
-    ];
-
     private static Rgb Get(Palette p, string role) =>
         p.Resolved.TryGetValue(role, out var c)
             ? c
@@ -221,105 +131,182 @@ public static class Emit
         return sb.ToString();
     }
 
-    public static string Rust(Palette p)
+    /// <summary>
+    /// The Rust side, as one file: <c>wlrix-ui/src/palette/generated.rs</c>.
+    ///
+    /// This replaced three hand-kept subsets -- 13 constants for the compositor in smithay's
+    /// <c>Color32F</c>, 23 for the greeter and 12 for the desktop in a packed <c>u32</c> --
+    /// which between them had three names for one color and left the window chrome bound to
+    /// none of them. One struct, every role, one color type, and the palette is a value a
+    /// running program can swap rather than a constant baked into the call site.
+    /// </summary>
+    public static string RustUi(IReadOnlyList<Palette> palettes, Palette standard)
     {
         var sb = new StringBuilder();
         sb.AppendLine("// SPDX-License-Identifier: GPL-3.0-or-later");
         sb.AppendLine("//");
         sb.AppendLine($"// {DoNotEdit.Replace("\n    ", "\n// ")}");
         sb.AppendLine("//");
-        sb.AppendLine($"// {p.Name}");
-        sb.AppendLine($"// Source: {p.Source}");
+        sb.AppendLine("// One `Palette` per scheme and gamma bake. The struct, the role table and");
+        sb.AppendLine("// every static below come from one generator run over the same JSON, so a");
+        sb.AppendLine("// renamed role cannot leave the accessors behind.");
         sb.AppendLine();
-        sb.AppendLine("// The palette is emitted whole; window chrome and other consumers land");
-        sb.AppendLine("// over time, so not every constant has a caller yet.");
+        sb.AppendLine("// A palette is emitted whole; consumers land over time, so not every role");
+        sb.AppendLine("// has a caller yet.");
         sb.AppendLine("#![allow(dead_code)]");
         sb.AppendLine();
-        sb.AppendLine("use smithay::backend::renderer::Color32F;");
+        sb.AppendLine("use crate::color::Rgb;");
         sb.AppendLine();
 
-        foreach (var (name, role) in RustConsts)
+        var roles = standard.Resolved.Keys.ToArray();
+        var metrics = standard.Metrics.Keys.ToArray();
+
+        // --- Metrics -----------------------------------------------------------------
+        sb.AppendLine("/// Motif geometry, in logical pixels.");
+        sb.AppendLine("///");
+        sb.AppendLine("/// Travels with the colors because a bevel needs both: the shadow pair is what");
+        sb.AppendLine("/// it is drawn in and the thickness is how much of it there is.");
+        sb.AppendLine("#[derive(Debug, Clone, Copy, PartialEq, Eq)]");
+        sb.AppendLine("pub struct Metrics {");
+        foreach (var key in metrics)
         {
-            var c = Get(p, role);
-            // One line, because that is what rustfmt collapses this to: the generated file
-            // is checked in, and `cargo fmt --check` runs over it in CI just like any other
-            // source. Emitting the wrapped form left the file permanently one `cargo fmt`
-            // away from what the generator produces, which quietly broke `just check-palette`.
-            sb.AppendLine($"/// `{c.Hex}`");
-            sb.AppendLine(
-                $"pub const {name}: Color32F = "
-                    + $"Color32F::new({c.R / 255.0:F6}, {c.G / 255.0:F6}, {c.B / 255.0:F6}, 1.0);");
+            sb.AppendLine($"    /// `{key}`");
+            sb.AppendLine($"    pub {Snake(key)}: i32,");
+        }
+        sb.AppendLine("}");
+        sb.AppendLine();
+
+        // --- Palette -----------------------------------------------------------------
+        sb.AppendLine("/// One resolved color scheme.");
+        sb.AppendLine("///");
+        sb.AppendLine("/// `Copy` and `'static`, so it is passed as `&'static Palette` and nothing that");
+        sb.AppendLine("/// holds one grows a lifetime parameter.");
+        sb.AppendLine("#[derive(Debug, Clone, Copy, PartialEq, Eq)]");
+        sb.AppendLine("pub struct Palette {");
+        sb.AppendLine("    /// The id `by_id` answers to, and what a config file names.");
+        sb.AppendLine("    pub id: &'static str,");
+        sb.AppendLine("    /// Human-readable, for a settings panel to list.");
+        sb.AppendLine("    pub name: &'static str,");
+        sb.AppendLine("    pub gamma: &'static str,");
+        sb.AppendLine("    /// The scheme's own `IsDarkScheme`.");
+        sb.AppendLine("    pub dark: bool,");
+        sb.AppendLine("    pub metrics: Metrics,");
+        foreach (var role in roles)
+        {
+            sb.AppendLine($"    /// `{role}` -- `{Get(standard, role).Hex}` in the default scheme.");
+            sb.AppendLine($"    pub {Snake(role)}: Rgb,");
+        }
+        sb.AppendLine("}");
+        sb.AppendLine();
+
+        // --- Role accessors ----------------------------------------------------------
+        sb.AppendLine("impl Palette {");
+        sb.AppendLine("    /// Every role name, in the order the palette JSON declares them.");
+        sb.AppendLine("    pub const ROLE_NAMES: &'static [&'static str] = &[");
+        foreach (var role in roles) sb.AppendLine($"        \"{role}\",");
+        sb.AppendLine("    ];");
+        sb.AppendLine();
+        sb.AppendLine("    /// One role by its JSON name, for code that is handed a name rather than");
+        sb.AppendLine("    /// writing one -- a settings panel listing what a scheme defines, or a");
+        sb.AppendLine("    /// loader reading a scheme off disk. Drawing code names the field.");
+        sb.AppendLine("    pub fn role(&self, name: &str) -> Option<Rgb> {");
+        sb.AppendLine("        Some(match name {");
+        foreach (var role in roles) sb.AppendLine($"            \"{role}\" => self.{Snake(role)},");
+        sb.AppendLine("            _ => return None,");
+        sb.AppendLine("        })");
+        sb.AppendLine("    }");
+        sb.AppendLine();
+        sb.AppendLine("    /// Overwrite one role, reporting whether the name was known.");
+        sb.AppendLine("    ///");
+        sb.AppendLine("    /// The half of the future filesystem loader that has to stay in step with the");
+        sb.AppendLine("    /// struct: start from a shipped palette, `set_role` what the file overrides,");
+        sb.AppendLine("    /// warn about the rest. Generated beside the fields so it cannot drift.");
+        sb.AppendLine("    pub fn set_role(&mut self, name: &str, value: Rgb) -> bool {");
+        sb.AppendLine("        match name {");
+        foreach (var role in roles) sb.AppendLine($"            \"{role}\" => self.{Snake(role)} = value,");
+        sb.AppendLine("            _ => return false,");
+        sb.AppendLine("        }");
+        sb.AppendLine("        true");
+        sb.AppendLine("    }");
+        sb.AppendLine("}");
+        sb.AppendLine();
+
+        // --- The schemes themselves --------------------------------------------------
+        foreach (var p in palettes)
+        {
+            sb.AppendLine($"/// {p.Name}");
+            sb.AppendLine("///");
+            sb.AppendLine($"/// Source: {p.Source}");
+            sb.AppendLine($"pub static {ConstName(p.Id)}: Palette = Palette {{");
+            sb.AppendLine($"    id: \"{p.Id}\",");
+            sb.AppendLine($"    name: \"{p.Name}\",");
+            sb.AppendLine($"    gamma: \"{p.Gamma}\",");
+            sb.AppendLine($"    dark: {(p.Dark ? "true" : "false")},");
+            sb.AppendLine("    metrics: Metrics {");
+            foreach (var key in metrics)
+            {
+                if (!p.Metrics.TryGetValue(key, out var value))
+                    throw new InvalidDataException($"palette '{p.Id}' has no metric '{key}'");
+                sb.AppendLine($"        {Snake(key)}: {value},");
+            }
+            sb.AppendLine("    },");
+            foreach (var role in roles)
+            {
+                var c = Get(p, role);
+                sb.AppendLine($"    {Snake(role)}: Rgb(0xff_{c.R:x2}{c.G:x2}{c.B:x2}),");
+            }
+            sb.AppendLine("};");
             sb.AppendLine();
         }
+
+        // --- Lookup ------------------------------------------------------------------
+        sb.AppendLine("/// Every scheme this build ships, for a settings panel to offer.");
+        // One line while it fits, one per line once it does not -- which is what rustfmt
+        // does, and this file is checked in and run through `cargo fmt --check` in CI. Get
+        // it wrong and the tree is permanently one `cargo fmt` away from what the generator
+        // produces, which quietly breaks `just check-palette`.
+        var all = string.Join(", ", palettes.Select(p => "&" + ConstName(p.Id)));
+        var oneLine = $"pub static ALL: &[&Palette] = &[{all}];";
+        if (oneLine.Length <= 100)
+        {
+            sb.AppendLine(oneLine);
+        }
+        else
+        {
+            sb.AppendLine("pub static ALL: &[&Palette] = &[");
+            foreach (var p in palettes) sb.AppendLine($"    &{ConstName(p.Id)},");
+            sb.AppendLine("];");
+        }
+        sb.AppendLine();
+        sb.AppendLine("/// What a component draws with when nothing selects a scheme.");
+        sb.AppendLine($"pub static DEFAULT: &Palette = &{ConstName(standard.Id)};");
+        sb.AppendLine();
+        sb.AppendLine("/// The scheme a config file or a `--palette` flag names.");
+        sb.AppendLine("///");
+        sb.AppendLine("/// `None` for an unknown id rather than a fallback: only the caller knows");
+        sb.AppendLine("/// whether that deserves a warning and [`DEFAULT`], or is a hard error.");
+        sb.AppendLine("pub fn by_id(id: &str) -> Option<&'static Palette> {");
+        sb.AppendLine("    ALL.iter().copied().find(|p| p.id == id)");
+        sb.AppendLine("}");
 
         return Trimmed(sb);
     }
 
-    /// <summary>
-    /// The greeter's palette. Not smithay's <c>Color32F</c>: the greeter draws into a
-    /// <c>wl_shm</c> Argb8888 buffer, so a packed u32 is one store per pixel and needs
-    /// no rearranging.
-    /// </summary>
-    public static string RustGreeter(Palette p)
+    /// <summary>lowerCamel or dotted.lowerCamel -> snake_case.</summary>
+    private static string Snake(string name)
     {
         var sb = new StringBuilder();
-        sb.AppendLine("// SPDX-License-Identifier: GPL-3.0-or-later");
-        sb.AppendLine("//");
-        sb.AppendLine("// GENERATED by wlrix-assets/tools/palettegen. Do not edit; edit the");
-        sb.AppendLine("// palette JSON in wlrix-assets/palette/ and re-run `just palette`.");
-        sb.AppendLine("#![allow(dead_code)]");
-        sb.AppendLine();
-        sb.AppendLine("use super::Rgb;");
-        sb.AppendLine();
-
-        foreach (var (name, role) in GreeterConsts)
+        foreach (var ch in name)
         {
-            var c = Get(p, role);
-            sb.AppendLine($"/// `{c.Hex}`");
-            sb.AppendLine($"pub const {name}: Rgb = Rgb(0xff_{c.R:x2}{c.G:x2}{c.B:x2});");
-            sb.AppendLine();
+            if (ch == '.') { sb.Append('_'); continue; }
+            if (char.IsUpper(ch)) { sb.Append('_').Append(char.ToLowerInvariant(ch)); continue; }
+            sb.Append(ch);
         }
-
-        sb.AppendLine("/// Motif geometry, in logical pixels.");
-        sb.AppendLine("pub mod metrics {");
-        foreach (var (name, key) in GreeterMetrics)
-        {
-            if (!p.Metrics.TryGetValue(key, out var value))
-                throw new InvalidDataException($"palette '{p.Id}' has no metric '{key}'");
-            sb.AppendLine($"    /// `{key}`");
-            sb.AppendLine($"    pub const {name}: i32 = {value};");
-        }
-        sb.AppendLine("}");
-
         return sb.ToString();
     }
 
-    /// <summary>
-    /// The desktop-icons client's palette. Same packed-<c>u32</c> form as the greeter's,
-    /// for the same reason: it draws into a <c>wl_shm</c> Argb8888 buffer.
-    /// </summary>
-    public static string RustDesktop(Palette p)
-    {
-        var sb = new StringBuilder();
-        sb.AppendLine("// SPDX-License-Identifier: GPL-3.0-or-later");
-        sb.AppendLine("//");
-        sb.AppendLine("// GENERATED by wlrix-assets/tools/palettegen. Do not edit; edit the");
-        sb.AppendLine("// palette JSON in wlrix-assets/palette/ and re-run `just palette`.");
-        sb.AppendLine("#![allow(dead_code)]");
-        sb.AppendLine();
-        sb.AppendLine("use super::Rgb;");
-        sb.AppendLine();
-
-        foreach (var (name, role) in DesktopConsts)
-        {
-            var c = Get(p, role);
-            sb.AppendLine($"/// `{c.Hex}`");
-            sb.AppendLine($"pub const {name}: Rgb = Rgb(0xff_{c.R:x2}{c.G:x2}{c.B:x2});");
-            sb.AppendLine();
-        }
-
-        return Trimmed(sb);
-    }
+    /// <summary>classic-g10 -> CLASSIC_G10.</summary>
+    private static string ConstName(string id) => id.Replace('-', '_').ToUpperInvariant();
 
     /// <summary>
     /// The built text with its trailing blank line removed, so the generated file matches

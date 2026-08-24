@@ -40,16 +40,19 @@ if (sources.Length == 0)
 }
 
 Palette? standard = null;
+var loaded = new List<Palette>();
 
 foreach (var src in sources)
 {
     var palette = Palette.Load(src);
+    loaded.Add(palette);
     var schemeName = SchemeName(palette.Id);
     var dest = Path.Combine(schemeDir, schemeName + ".axaml");
     File.WriteAllText(dest, Emit.Scheme(palette, schemeName));
     Console.WriteLine($"  {Rel(root, dest)}  ({palette.Resolved.Count} roles)");
 
-    // The default (gamma 1.7) scheme is what the compositor matches against.
+    // The default (gamma 1.7) scheme is the one every other palette is checked against,
+    // and the one a component falls back to.
     if (palette.Id == "classic") standard = palette;
 }
 
@@ -65,48 +68,37 @@ if (standard is null)
     return 1;
 }
 
-var rustDir = Path.Combine(root, "wlrix-compositor", "src");
-if (Directory.Exists(rustDir))
+// Every scheme must define exactly the same roles.
+//
+// The Rust side is now one struct with a field per role, so a scheme that is missing one
+// cannot be represented -- and a scheme that adds one would have it silently dropped. This
+// used to be enforced by nobody: three hand-kept subsets were emitted from the `classic`
+// palette alone and the other bakes were never looked at.
+foreach (var palette in loaded)
 {
-    var rust = Path.Combine(rustDir, "palette.rs");
-    File.WriteAllText(rust, Emit.Rust(standard));
-    Console.WriteLine($"  {Rel(root, rust)}");
-}
-else
-{
-    Console.Error.WriteLine($"palettegen: {Rel(root, rustDir)} not found; skipped Rust output");
+    var missing = standard.Resolved.Keys.Except(palette.Resolved.Keys).ToArray();
+    var extra = palette.Resolved.Keys.Except(standard.Resolved.Keys).ToArray();
+    if (missing.Length == 0 && extra.Length == 0) continue;
+
+    Console.Error.WriteLine($"palettegen: '{palette.Id}' does not define the same roles as 'classic'");
+    if (missing.Length > 0) Console.Error.WriteLine($"  missing: {string.Join(", ", missing)}");
+    if (extra.Length > 0) Console.Error.WriteLine($"  extra:   {string.Join(", ", extra)}");
+    return 1;
 }
 
-// The greeter draws a whole Motif dialog, so it needs more roles than the
-// compositor and its own color type -- it is not smithay-based.
-var greeterSrc = Path.Combine(root, "wlrix-greeter", "src");
-if (Directory.Exists(greeterSrc))
+// One Rust file for every consumer, in `wlrix-ui`. The compositor, the greeter and the
+// desktop used to get three different subsets of this in two different color types; they
+// share the crate now, so they share the palette.
+var uiDir = Path.Combine(root, "wlrix-ui", "src", "palette");
+if (Directory.Exists(uiDir))
 {
-    var themeDir = Path.Combine(greeterSrc, "theme");
-    Directory.CreateDirectory(themeDir);
-    var greeter = Path.Combine(themeDir, "palette.rs");
-    File.WriteAllText(greeter, Emit.RustGreeter(standard));
-    Console.WriteLine($"  {Rel(root, greeter)}");
+    var generated = Path.Combine(uiDir, "generated.rs");
+    File.WriteAllText(generated, Emit.RustUi(loaded, standard));
+    Console.WriteLine($"  {Rel(root, generated)}  ({loaded.Count} schemes)");
 }
 else
 {
-    Console.Error.WriteLine($"palettegen: {Rel(root, greeterSrc)} not found; skipped greeter output");
-}
-
-// The desktop-icons client draws no widgets, only tinted icons and labels, so it takes a
-// short list of its own -- including the icon tints, which nothing else binds.
-var desktopSrc = Path.Combine(root, "wlrix-desktop", "src");
-if (Directory.Exists(desktopSrc))
-{
-    var themeDir = Path.Combine(desktopSrc, "theme");
-    Directory.CreateDirectory(themeDir);
-    var desktop = Path.Combine(themeDir, "palette.rs");
-    File.WriteAllText(desktop, Emit.RustDesktop(standard));
-    Console.WriteLine($"  {Rel(root, desktop)}");
-}
-else
-{
-    Console.Error.WriteLine($"palettegen: {Rel(root, desktopSrc)} not found; skipped desktop output");
+    Console.Error.WriteLine($"palettegen: {Rel(root, uiDir)} not found; skipped Rust output");
 }
 
 return 0;

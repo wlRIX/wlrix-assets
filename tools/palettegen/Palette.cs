@@ -37,12 +37,30 @@ public readonly record struct Rgb(byte R, byte G, byte B)
 public sealed class Palette
 {
     private static readonly Regex Call =
-        new(@"^(?<fn>shadow|shade)\(\s*(?<key>\w+)\s*,\s*(?<arg>\w+)\s*\)$", RegexOptions.Compiled);
+        new(@"^(?<fn>shadow|shade|toward)\(\s*(?<key>\w+)\s*,\s*(?<arg>\w+)\s*\)$",
+            RegexOptions.Compiled);
+
+    /// <summary>
+    /// A role may state a color outright. Needed because a scheme's roles are its own:
+    /// Gotham binds five of them differently from Classic, and one wlRIX surface -- the
+    /// backdrop behind a minimized window's thumbnail -- was sampled from a screenshot and
+    /// has no IRIX name within thirty levels to point at. The prohibition on hand-editing
+    /// is on layer 1, the transcribed <c>palette</c> block; <c>roles</c> is wlRIX's own.
+    /// </summary>
+    private static readonly Regex Literal =
+        new(@"^#[0-9a-fA-F]{6}$", RegexOptions.Compiled);
 
     public required string Id { get; init; }
     public required string Name { get; init; }
     public required string Gamma { get; init; }
     public required string Source { get; init; }
+
+    /// <summary>
+    /// The scheme's own <c>IsDarkScheme</c>. Carried rather than inferred: it decides
+    /// things no single color can, and a consumer that wants to know should not have to
+    /// guess by measuring the panel.
+    /// </summary>
+    public required bool Dark { get; init; }
 
     /// <summary>Role name -> resolved color, in the file's declaration order.</summary>
     public required IReadOnlyDictionary<string, Rgb> Resolved { get; init; }
@@ -87,14 +105,21 @@ public sealed class Palette
         foreach (var role in r.GetProperty("roles").EnumerateObject())
         {
             var expr = role.Value.GetString()!;
+
+            if (Literal.IsMatch(expr))
+            {
+                resolved[role.Name] = Rgb.Parse(expr);
+                continue;
+            }
+
             var m = Call.Match(expr);
 
             if (!m.Success)
             {
                 if (!palette.TryGetValue(expr, out var direct))
                     throw new InvalidDataException(
-                        $"{Path.GetFileName(path)}: role '{role.Name}' references " +
-                        $"unknown color '{expr}'");
+                        $"{Path.GetFileName(path)}: role '{role.Name}' is '{expr}', which is " +
+                        "neither a palette key, a #rrggbb literal, nor shadow()/shade()/toward()");
                 resolved[role.Name] = direct;
                 continue;
             }
@@ -117,6 +142,11 @@ public sealed class Palette
                         : basis.Scale(Factor("top")),
                 "shadow" when arg == "bottom" => basis.Scale(Factor("bottom")),
                 "shade" => basis.Scale(Factor(arg)),
+                // Toward white outright, with no multiply and no fallback. The 4Dwm frame
+                // highlight is this and not `shadow(_, top)`: on the active titlebar's
+                // #a59f80 the multiply does not clamp, so the fallback never fires and the
+                // result comes out far lighter and yellower than the frame IRIX drew.
+                "toward" => basis.TowardWhite(Factor(arg)),
                 _ => throw new InvalidDataException(
                     $"{Path.GetFileName(path)}: unsupported derivation '{expr}'"),
             };
@@ -127,6 +157,7 @@ public sealed class Palette
             Id = r.GetProperty("id").GetString()!,
             Name = r.GetProperty("name").GetString()!,
             Gamma = r.GetProperty("gamma").GetString()!,
+            Dark = r.TryGetProperty("dark", out var dark) && dark.GetBoolean(),
             Source = r.GetProperty("source").GetString()!,
             Resolved = resolved,
             Metrics = metrics,
