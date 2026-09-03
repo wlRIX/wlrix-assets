@@ -86,6 +86,12 @@ foreach (var palette in loaded)
     return 1;
 }
 
+// The scheme catalog, beside the dictionaries it points at. Emitted after the role check
+// above, so a catalog can never list a scheme the theme would fail to load.
+var catalog = Path.Combine(schemeDir, "SchemeCatalog.g.cs");
+File.WriteAllText(catalog, Emit.SchemeCatalog(loaded, standard, SchemeName));
+Console.WriteLine($"  {Rel(root, catalog)}  ({loaded.Count} schemes)");
+
 // One Rust file for every consumer, in `wlrix-ui`. The compositor, the greeter and the
 // desktop used to get three different subsets of this in two different color types; they
 // share the crate now, so they share the palette.
@@ -106,7 +112,7 @@ return 0;
 static string Rel(string root, string path) =>
     Path.GetRelativePath(root, path).Replace('\\', '/');
 
-// indigo-magic -> IndigoMagic, indigo-magic-g10 -> IndigoMagicG10
+// classic -> Classic, classic-g10 -> ClassicG10
 static string SchemeName(string id) => string.Concat(
     id.Split('-', StringSplitOptions.RemoveEmptyEntries)
       .Select(p => CultureInfo.InvariantCulture.TextInfo.ToTitleCase(p)));

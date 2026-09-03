@@ -98,7 +98,15 @@ public static class Emit
         sb.AppendLine($"    Source: {p.Source}");
         sb.AppendLine("-->");
         sb.AppendLine("<ResourceDictionary xmlns=\"https://github.com/avaloniaui\"");
-        sb.AppendLine("                    xmlns:x=\"http://schemas.microsoft.com/winfx/2006/xaml\">");
+        sb.AppendLine("                    xmlns:x=\"http://schemas.microsoft.com/winfx/2006/xaml\"");
+        sb.AppendLine("                    xmlns:sys=\"clr-namespace:System;assembly=System.Runtime\">");
+        sb.AppendLine();
+        sb.AppendLine("    <!-- Which scheme this is, so WlrixTheme can find the one merged dictionary it");
+        sb.AppendLine("         owns and replace it. It cannot look for a ResourceInclude: the XAML compiler");
+        sb.AppendLine("         resolves those away at build time, leaving a plain ResourceDictionary with");
+        sb.AppendLine("         nothing to tell it apart from a control theme. -->");
+        sb.AppendLine($"    <sys:String x:Key=\"{SchemeIdKey}\">{p.Id}</sys:String>");
+        sb.AppendLine();
 
         foreach (var (key, role) in SchemeKeys)
             sb.AppendLine($"    <Color x:Key=\"{key}Color\">{Get(p, role).Hex}</Color>");
@@ -106,6 +114,14 @@ public static class Emit
         sb.AppendLine("</ResourceDictionary>");
         return sb.ToString();
     }
+
+    /// <summary>
+    /// The resource key every scheme dictionary carries, holding its own id.
+    ///
+    /// Emitted into the dictionaries and into the catalog from the same constant, so the name
+    /// the theme looks for and the name the schemes answer to cannot drift apart.
+    /// </summary>
+    private const string SchemeIdKey = "WlrixSchemeId";
 
     /// <summary>
     /// The brush layer is the same for every scheme (each brush just points at
@@ -129,6 +145,95 @@ public static class Emit
 
         sb.AppendLine("</ResourceDictionary>");
         return sb.ToString();
+    }
+
+    /// <summary>
+    /// The scheme catalog for the C# side: <c>Wlrix.Avalonia/Schemes/SchemeCatalog.g.cs</c>.
+    ///
+    /// The Rust consumers get this for free — <c>wlrix_ui::palette::ALL</c> carries every
+    /// scheme's id, name, gamma and dark flag, because a <c>Palette</c> is a value there. The
+    /// C# side had nothing equivalent: the theme shipped four scheme dictionaries and no way to
+    /// find out that they existed, so the demo hardcoded their names and a settings panel would
+    /// have had to hardcode them again. This is the same list, emitted from the same run over
+    /// the same JSON, so a new palette file becomes a new entry in every scheme picker without
+    /// anyone editing one.
+    /// </summary>
+    public static string SchemeCatalog(IReadOnlyList<Palette> palettes, Palette standard,
+                                       Func<string, string> schemeName)
+    {
+        var sb = new StringBuilder();
+        sb.AppendLine("// SPDX-License-Identifier: MIT");
+        sb.AppendLine("//");
+        sb.AppendLine($"// {DoNotEdit.Replace("\n    ", "\n// ")}");
+        sb.AppendLine("//");
+        sb.AppendLine("// One entry per scheme JSON, so a scheme picker in an app lists exactly what the");
+        sb.AppendLine("// compositor can be set to. Ordered by name rather than by filename, which is what a");
+        sb.AppendLine("// picker wants: the three gamma bakes read 1.0, 1.7, 2.4 instead of 1.0, 2.4, 1.7.");
+        sb.AppendLine();
+        // Required, not tidiness: a `.g.cs` name puts the file in the "generated code" nullable
+        // context, where an annotation without an explicit directive is a hard error (CS8669).
+        sb.AppendLine("#nullable enable");
+        sb.AppendLine();
+        sb.AppendLine("using System.Collections.Generic;");
+        sb.AppendLine("using System.Linq;");
+        sb.AppendLine();
+        sb.AppendLine("namespace Wlrix.Avalonia;");
+        sb.AppendLine();
+        sb.AppendLine("/// <summary>One color scheme: what to call it, and where its dictionary lives.</summary>");
+        sb.AppendLine("/// <param name=\"Id\">What a wlRIX config file names, and what the settings daemon writes.</param>");
+        sb.AppendLine("/// <param name=\"Name\">Human-readable, for a list in a settings panel.</param>");
+        sb.AppendLine("/// <param name=\"Gamma\">The display gamma this bake was made for.</param>");
+        sb.AppendLine("/// <param name=\"IsDark\">The scheme's own IsDarkScheme, for an app that has to pick a contrast.</param>");
+        sb.AppendLine("/// <param name=\"ResourceUri\">The <c>avares://</c> URI of its ResourceDictionary.</param>");
+        sb.AppendLine("public sealed record WlrixScheme(");
+        sb.AppendLine("    string Id,");
+        sb.AppendLine("    string Name,");
+        sb.AppendLine("    string Gamma,");
+        sb.AppendLine("    bool IsDark,");
+        sb.AppendLine("    string ResourceUri);");
+        sb.AppendLine();
+        sb.AppendLine("/// <summary>Every color scheme this build of the theme ships.</summary>");
+        sb.AppendLine("public static class WlrixSchemes");
+        sb.AppendLine("{");
+        sb.AppendLine("    /// <summary>");
+        sb.AppendLine("    /// The resource key every scheme dictionary carries, holding its own id.");
+        sb.AppendLine("    /// </summary>");
+        sb.AppendLine("    /// <remarks>");
+        sb.AppendLine("    /// How <c>WlrixTheme</c> finds the one merged dictionary it owns. It cannot look for");
+        sb.AppendLine("    /// a <c>ResourceInclude</c>: the XAML compiler resolves those away at build time,");
+        sb.AppendLine("    /// leaving a plain <c>ResourceDictionary</c> indistinguishable from a control theme.");
+        sb.AppendLine("    /// </remarks>");
+        sb.AppendLine($"    public const string IdKey = \"{SchemeIdKey}\";");
+        sb.AppendLine();
+        sb.AppendLine("    /// <summary>Every scheme, ordered by name.</summary>");
+        sb.AppendLine("    public static IReadOnlyList<WlrixScheme> All { get; } =");
+        sb.AppendLine("    [");
+        foreach (var p in palettes.OrderBy(p => p.Name, StringComparer.Ordinal))
+        {
+            var uri = $"avares://Wlrix.Avalonia/Schemes/{schemeName(p.Id)}.axaml";
+            sb.AppendLine($"        new(\"{p.Id}\", \"{p.Name}\", \"{p.Gamma}\", " +
+                          $"{(p.Dark ? "true" : "false")}, \"{uri}\"),");
+        }
+        sb.AppendLine("    ];");
+        sb.AppendLine();
+        sb.AppendLine("    /// <summary>");
+        sb.AppendLine("    /// What an app renders in when nothing has said otherwise, and what an id naming no");
+        sb.AppendLine("    /// shipped scheme falls back to. The same default the Rust side takes.");
+        sb.AppendLine("    /// </summary>");
+        sb.AppendLine($"    public static WlrixScheme Default {{ get; }} = ById(\"{standard.Id}\")!;");
+        sb.AppendLine();
+        sb.AppendLine("    /// <summary>");
+        sb.AppendLine("    /// The scheme an id names, or <c>null</c> if it names none.");
+        sb.AppendLine("    /// </summary>");
+        sb.AppendLine("    /// <remarks>");
+        sb.AppendLine("    /// Null rather than a fallback, as <c>wlrix_ui::palette::by_id</c> does: only the");
+        sb.AppendLine("    /// caller knows whether an unrecognized id deserves a warning and the default, or is");
+        sb.AppendLine("    /// a mistake worth reporting.");
+        sb.AppendLine("    /// </remarks>");
+        sb.AppendLine("    public static WlrixScheme? ById(string? id) =>");
+        sb.AppendLine("        All.FirstOrDefault(scheme => scheme.Id == id);");
+        sb.AppendLine("}");
+        return Trimmed(sb);
     }
 
     /// <summary>

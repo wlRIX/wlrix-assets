@@ -67,11 +67,15 @@ The palette is the single source of truth for color across wlRIX. Nothing downst
 `tools/palettegen` resolves it ahead of time and emits native sources for each consumer, so the compositor and the apps
 cannot drift apart.
 
-| File                            | Gamma | Role                                         |
-|---------------------------------|-------|----------------------------------------------|
-| `palette/indigo-magic.json`     | 1.7   | Default. `wlrix.palette.json` re-exports it. |
-| `palette/indigo-magic-g10.json` | 1.0   | Lightest bake.                               |
-| `palette/indigo-magic-g24.json` | 2.4   | Darkest bake.                                |
+| File                         | Id            | Gamma | Role                                                                 |
+|------------------------------|---------------|-------|----------------------------------------------------------------------|
+| `palette/classic.json`       | `classic`     | 1.7   | Default — Indigo Magic. `wlrix.palette.json` re-exports it.          |
+| `palette/classic-g10.json`   | `classic-g10` | 1.0   | Lightest bake.                                                       |
+| `palette/classic-g24.json`   | `classic-g24` | 2.4   | Darkest bake.                                                        |
+| `palette/gotham.json`        | `gotham`      | 1.7   | IRIX's dark scheme. 1.7 only — it was never baked for the other two. |
+
+The **id** is what a config file names (`[appearance] palette = "gotham"`) and what the settings daemon writes; a
+component given an id it does not ship falls back to `classic` and says so in its log.
 
 Each file has three layers:
 
@@ -96,9 +100,20 @@ just palette        # regenerate
 just check-palette  # fail if the checked-in output is stale
 ```
 
-This writes `wlrix-avalonia/src/Wlrix.Avalonia/Schemes/*.axaml` (+ `Brushes.axaml`)
-and `wlrix-compositor/src/palette.rs`. Those files are checked in, so neither build depends on the generator having been
-run; they carry a do-not-edit header.
+This writes:
+
+| Output                                                     | Consumer                                                        |
+|------------------------------------------------------------|-----------------------------------------------------------------|
+| `wlrix-avalonia/…/Schemes/<Scheme>.axaml`                   | one `ResourceDictionary` per scheme, merged by `WlrixTheme`.    |
+| `wlrix-avalonia/…/Schemes/Brushes.axaml`                    | one brush per color key, scheme-independent.                    |
+| `wlrix-avalonia/…/Schemes/SchemeCatalog.g.cs`               | `WlrixSchemes.All` — id, name, gamma, dark flag, resource URI.  |
+| `wlrix-ui/src/palette/generated.rs`                         | the `Palette` struct and one static per scheme, for every Rust component. |
+
+Those files are checked in, so neither build depends on the generator having been run; they carry a do-not-edit header.
+
+The catalog is why a new palette JSON is one edit: `wlrix-ui` gets a new `Palette` and the theme gets a new dictionary
+*and* a new entry in every scheme picker, from the same run. Nothing has a hand-kept list of scheme names — not the
+theme, not the settings daemon, and not the Color Schemes panel.
 
 ### Verifying
 
