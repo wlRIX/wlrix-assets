@@ -10,6 +10,7 @@ everything renders identically.
 | Directory     | Contents                                                          |
 |---------------|-------------------------------------------------------------------|
 | `palette/`    | Canonical color palette — the single source of truth for theming. |
+| `themes/`     | The wlRIX GTK stylesheets and their titlebar assets.              |
 | `icons/`      | Icon theme (IRIX Indigo Magic icon set).                          |
 | `cursors/`    | Cursor theme (`sgi`, the IRIX pointer set).                       |
 | `wallpapers/` | Default wallpapers / backgrounds.                                 |
@@ -60,6 +61,58 @@ is drawn for a given `wl_pointer.set_cursor` or `cursor-shape-v1` request is the
 The theme carries **only 32×32 images**, which is why the default config asks for size 32: a client told 24 would
 resample the 32-pixel artwork and lose the hard IRIX edges. On a HiDPI screen the compositor scales it up rather than
 picking a larger frame, because there is not one.
+
+## GTK theme
+
+`themes/wlRIX/` makes a GTK application's own headerbar look like the titlebar row
+`wlrix-compositor` draws around it. GTK never negotiates `xdg-decoration`, so the compositor gives
+it the IRIX border and no titlebar and the client draws its own bar inside that frame; without
+this the bar is an Adwaita slab in an IRIX border.
+
+| Path | Written by |
+|------|------------|
+| `gtk-3.0/wlrix.css`, `gtk-4.0/wlrix.css` | by hand. Structure: sizes, resets, which nodes to reach. |
+| `gtk-3.0/schemes/<id>.css`, `gtk-4.0/schemes/<id>.css` | generated. Colors, and which asset goes on which button. |
+| `assets/<id>/*.svg` | generated. Twenty per scheme: four states each of menu, minimize, maximize, maximized and close. |
+
+The generated half comes from **`wlrix-compositor --dump-gtk-theme`**, not from `palettegen`. Only
+the compositor knows what a titlebar button looks like, and `decoration_quads()` hands back the
+whole frame as a list of colored rectangles -- so an asset is that list written out as SVG, one
+`<rect>` per quad. Lossless, because the source really is rectangles, and it scales to any HiDPI
+factor in a way no screen capture would. Regenerate with `just gtk-theme` from `wlrix-epoch`;
+`just check-gtk-theme` fails if the checked-in output is stale.
+
+The bar itself has no asset. A Motif bevel is not a CSS border -- its top and bottom shadows run
+the full width and the left and right pair is inset between them, while a CSS border mitres its
+corners -- but four inset `box-shadow`s draw it exactly, and then it takes its colors from
+`@define-color` instead of an image. A `border-image` nine-slice would have been the obvious
+answer and does not work: GTK 3 parses `border-image-slice: 2 fill` and ignores the `fill`,
+leaving the middle unpainted.
+
+### How it reaches a window
+
+`wlrix-settings-daemon` writes two `@import` lines into `~/.config/gtk-{3,4}.0/gtk.css` naming the
+structural sheet and the current scheme's, inside a marked block that leaves the rest of the file
+alone. There is no `index.theme` and `gtk-theme-name` is never set to `wlRIX`: this is a pair of
+stylesheets rather than a complete GTK theme, and libadwaita ignores `gtk-theme-name` regardless.
+
+Two things it cannot do, both measured rather than assumed:
+
+- **A running GTK application does not pick up a scheme change.** GTK does not reload `gtk.css`
+  when it changes, so the new scheme reaches applications started afterwards. KDE closes this gap
+  with a GTK 3 module (`colorreload-gtk-module` in the reference config under
+  `_docs/kde-config-ref`); GTK 4 dropped modules, so its half is the settings portal.
+- **The button layout comes from the Settings portal.** On Wayland GTK reads
+  `gtk-decoration-layout` from `org.freedesktop.impl.portal.Settings` and ignores `settings.ini`
+  for it; `xdg-desktop-portal-wlrix` reports `menu:minimize,maximize`. GTK 3 asks a portal only
+  when `GTK_USE_PORTAL=1`, which `start-wlrix.sh` exports; GTK 4 asks unconditionally. The
+  stylesheets still style the close button rather than hiding it, because the layout is only ours
+  where that portal is reached. Where it is, there is no close button — as on IRIX, where a
+  right-click on the compositor's border opens the window menu and Close is in it.
+
+  GTK will not draw the *menu* button: GTK 3 does so only for an application with an app menu,
+  and GTK 4 not at all. The layout asks for it anyway, since it costs nothing and says what is
+  meant.
 
 ## Palette
 

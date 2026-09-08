@@ -1,0 +1,223 @@
+/* The wlRIX titlebar, for GTK 3.
+ *
+ * Hand-written and scheme-independent. Everything that varies with the color scheme -- the
+ * @define-colors and which asset goes on which button -- is generated into schemes/<id>.css by
+ * `wlrix-compositor`, out of the same code the compositor draws its own chrome with. Load both:
+ * this one first, then a scheme.
+ *
+ * WHAT THIS IS FOR
+ *
+ * A GTK client never negotiates xdg-decoration, so wlrix-compositor gives it the border and no
+ * titlebar (see wlrix-compositor/src/frame.rs) and the client draws its own headerbar inside our
+ * frame. Structurally that is right; visually the headerbar is an Adwaita bar sitting in an IRIX
+ * border. These rules make it the titlebar row the compositor would have drawn.
+ *
+ * So this styles the titlebar and nothing else. The border around it is ours already, and the
+ * widgets inside keep Adwaita's shape and only take the scheme's colors. A full Motif widget
+ * theme is a separate job.
+ *
+ * WHY THE BEVEL IS FOUR SHADOWS
+ *
+ * A Motif bevel is not a CSS border. A titlebar piece is drawn with Run::Vertical: its top and
+ * bottom shadows run the full width and the left and right pair is inset between them, while a
+ * CSS border mitres its corners at 45 degrees.
+ *
+ * Four inset box-shadows draw it exactly -- the horizontal pair listed first, so the full-width
+ * vertical pair paints over it at the corners. The declaration is in schemes/<id>.css because
+ * its colors come from the palette.
+ *
+ * A border-image nine-slice would have been the obvious answer and does not work: GTK 3 parses
+ * `border-image-slice: 2 fill` and then ignores the `fill`, so the middle of the source is never
+ * drawn and the bar comes out transparent, which under a compositor is black.
+ */
+
+/* WHEN THIS TAKES EFFECT
+ *
+ * At application startup, and not again. GTK does not reload gtk.css when it changes -- measured,
+ * not assumed -- so a scheme change reaches GTK applications started after it, while the ones
+ * already open keep what they had. Everything else in wlRIX repaints immediately.
+ *
+ * One consequence of that, since the Settings portal started emitting `SettingChanged`: a
+ * running GTK window *does* hear about a scheme change, and flips its dark hint on the spot
+ * while the colors here stay on the scheme it started with. The mismatch is the price of every
+ * other toolkit -- Chromium, Electron, Qt -- learning about the change at all, which they can
+ * only do from that signal. Closing it properly needs a GTK 3 module to reload the CSS, the way
+ * KDE's colorreload-gtk-module does; GTK 4 dropped modules and has no equivalent.
+ *
+ * The button layout comes from the Settings portal, not from settings.ini: on Wayland GTK reads
+ * `gtk-decoration-layout` from `org.freedesktop.impl.portal.Settings` and ignores the file.
+ * xdg-desktop-portal-wlrix reports `menu:minimize,maximize`; GTK 3 asks for it only when
+ * GTK_USE_PORTAL=1, which start-wlrix.sh exports, and GTK 4 asks unconditionally.
+ *
+ * The close button is still styled rather than hidden: the layout is only ours where that portal
+ * is reached, and a window with no visible way to close it would be the worse trade. Where the
+ * layout *is* ours there is no close button, as on IRIX -- a right-click on the compositor's
+ * border opens the window menu, which carries Close.
+ */
+
+/* ---------------------------------------------------------------------------------------- */
+/* The titlebar row                                                                          */
+/* ---------------------------------------------------------------------------------------- */
+
+headerbar,
+.titlebar {
+  /* 30px is TITLEBAR_HEIGHT, and it is not negotiable: the button glyphs are positioned by
+     whole-pixel offsets measured off the IRIX originals, so a taller bar would stretch the
+     assets and a shorter one would crop them. */
+  min-height: 30px;
+  padding: 0;
+  margin: 0;
+
+  /* The bevel itself is four inset box-shadows, written per scheme in schemes/<id>.css along
+     with the face color -- see the note there for why it is not a border and not a
+     border-image. Only the reset belongs here. */
+  border: none;
+  border-radius: 0;
+  background-image: none;
+  text-shadow: none;
+}
+
+headerbar:backdrop,
+.titlebar:backdrop {
+  /* Only the titlebar changes when a window loses the keyboard. IRIX left the contents alone,
+     and so does the scheme sheet: every unfocused body color is its focused one. The inactive
+     face and bevel come from schemes/<id>.css. */
+  background-image: none;
+  border: none;
+}
+
+/* The window's name. TITLE_PX is 15 and the frame draws it in Face::Bold, so the client's own
+   title matches the one the compositor puts on a server-decorated window beside it.
+
+   Not left-aligned, which the compositor's TitleAlign::Left does: a GtkHeaderBar centres its
+   title widget by a widget property, and CSS cannot reach it. That is the one part of the row
+   this theme cannot match. */
+headerbar .title,
+.titlebar .title {
+  font-weight: bold;
+  font-size: 15px;
+  padding: 0 6px;
+  text-shadow: none;
+}
+
+headerbar .subtitle,
+.titlebar .subtitle {
+  /* IRIX titlebars carry a name and nothing else. */
+  font-size: 0;
+  opacity: 0;
+}
+
+/* ---------------------------------------------------------------------------------------- */
+/* The buttons                                                                               */
+/* ---------------------------------------------------------------------------------------- */
+
+headerbar button.titlebutton,
+.titlebar button.titlebutton {
+  /* Square, flush against the ends of the bar, and exactly the size of the asset: BUTTON_W is
+     TITLEBAR_HEIGHT, so a titlebar button is 30x30 and its glyph is placed inside that. */
+  min-width: 30px;
+  min-height: 30px;
+  padding: 0;
+  margin: 0;
+  border: none;
+  border-radius: 0;
+  outline: none;
+  box-shadow: none;
+  background-color: transparent;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 30px 30px;
+
+}
+
+/* Adwaita puts a themed icon in the button. Ours is the whole button, glyph included, so the
+   icon would draw a second symbol on top of it.
+
+   Close is the exception and keeps its own: wlRIX has no close glyph -- IRIX put Close in the
+   window menu -- so that asset is the bare button face and GTK's symbol is what makes it
+   readable. */
+headerbar button.titlebutton:not(.close),
+.titlebar button.titlebutton:not(.close) {
+  -gtk-icon-source: none;
+}
+
+/* Motif has no hover state: a titlebar button reacts to being pressed and to nothing else.
+   Without this, Adwaita's hover highlight shows through the transparent background and the
+   button lights up under the pointer, which no IRIX window ever did. */
+headerbar button.titlebutton:hover,
+.titlebar button.titlebutton:hover,
+headerbar button.titlebutton:backdrop:hover,
+.titlebar button.titlebutton:backdrop:hover {
+  background-color: transparent;
+  box-shadow: none;
+  border: none;
+}
+
+headerbar button.titlebutton:focus,
+.titlebar button.titlebutton:focus {
+  outline: none;
+  box-shadow: none;
+}
+
+/* IRIX had no close button: Close lived in the window menu, and wlrix-compositor's own frame
+   has menu_btn, min_btn and max_btn and nothing else. The Settings portal now reports
+   `menu:minimize,maximize`, so GTK asks for the same three -- see the note at the top of this
+   file for why that is the portal's answer and not settings.ini's.
+
+   It is NOT hidden all the same: the layout is only ours where that portal is reached, and a
+   window with no visible way to close it would be the worse trade. It gets the plain button
+   face instead, generated in schemes/<id>.css. */
+
+/* ---------------------------------------------------------------------------------------- */
+/* The window itself                                                                         */
+/* ---------------------------------------------------------------------------------------- */
+
+/* GTK draws a drop shadow and rounded corners outside the window, and reserves the margin for
+   them. Under a server-side border both are wrong: the IRIX frame has square corners and its own
+   edge, and the compositor clips a window's surface tree to its geometry, so GTK's shadow only
+   ever showed up as a soft halo where our border should have been hard. */
+window.csd,
+window.csd decoration {
+  border-radius: 0;
+  box-shadow: none;
+  margin: 0;
+}
+
+window.csd headerbar:first-child,
+window.csd .titlebar:first-child {
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+}
+
+/* ---------------------------------------------------------------------------------------- */
+/* The window body                                                                           */
+/* ---------------------------------------------------------------------------------------- */
+
+/* Defining @theme_bg_color is not enough on its own, and it is worth saying why: the override
+   *does* land -- @theme_bg_color resolves to the scheme's gray -- but Adwaita is compiled from
+   SCSS with its colors written out as literals and never reads the name back. So a window stays
+   Adwaita's near-white however the color is redefined, and it takes a rule to move it.
+
+   These are the main surfaces and nothing else. Widgets keep Adwaita's shape; only the palette
+   moves. A Motif widget theme is the counterpart of Wlrix.Avalonia and is its own job. */
+
+window,
+window.background,
+.background,
+dialog,
+popover,
+popover > contents {
+  background-color: @theme_bg_color;
+  color: @theme_fg_color;
+}
+
+/* Where text is entered or listed: IRIX gave those their own background rather than the panel's,
+   which is what makes a field read as a field. */
+entry,
+textview,
+textview text,
+treeview.view,
+list {
+  background-color: @theme_base_color;
+  color: @theme_text_color;
+}
