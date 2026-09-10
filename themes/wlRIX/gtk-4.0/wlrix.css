@@ -37,8 +37,12 @@
  * running GTK window *does* hear about a scheme change, and flips its dark hint on the spot
  * while the colors here stay on the scheme it started with. The mismatch is the price of every
  * other toolkit -- Chromium, Electron, Qt -- learning about the change at all, which they can
- * only do from that signal. Closing it properly needs a GTK 3 module to reload the CSS, the way
- * KDE's colorreload-gtk-module does; GTK 4 dropped modules and has no equivalent.
+ * only do from that signal.
+ *
+ * GTK 3 no longer has this problem: `wlrix-gtk-config` is a module that reloads gtk.css on
+ * change, the way KDE's colorreload-gtk-module does. **GTK 4 removed module support outright**,
+ * so there is no counterpart for this sheet and no route to a live recolor here. A GTK 4
+ * application takes the scheme it started with.
  *
  * The button layout comes from the Settings portal, not from settings.ini: on Wayland GTK reads
  * `gtk-decoration-layout` from `org.freedesktop.impl.portal.Settings` and ignores the file.
@@ -127,12 +131,28 @@ windowcontrols > button {
    GTK 4 has no `-gtk-icon-source` to unset; the child is a real widget.
 
    Close is the exception and keeps its own: wlRIX has no close glyph, so that asset is the bare
-   button face and GTK's symbol is what makes it readable. */
+   button face and GTK's symbol is what makes it readable.
+
+   `opacity` alone, and not `-gtk-icon-size: 0` beside it: zeroing the size makes GTK look an
+   icon up at size 0, which fails two assertions per button and fills the journal with
+   `gtk_icon_theme_lookup_by_gicon: assertion 'size > 0' failed`. The icon is hidden either
+   way. */
 windowcontrols > button:not(.close) > image {
   opacity: 0;
   min-width: 0;
   min-height: 0;
-  -gtk-icon-size: 0;
+}
+
+/* Close the gap between the buttons.
+
+   GtkWindowControls packs them into a box built in code with `spacing = 6` -- measured, the
+   same 6 GTK 3's GtkHeaderBar uses (minimize at x=534, maximize at x=570, both 30 wide). Box
+   spacing has no CSS node behind it, so it cannot be set from here; a negative margin on every
+   button after the first cancels it exactly and leaves the group flush with the right edge.
+   The compositor's own frame butts its buttons together, so this is what makes the two read as
+   one frame. */
+windowcontrols > button + button {
+  margin-left: -6px;
 }
 
 /* Motif has no hover state. */

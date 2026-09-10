@@ -33,16 +33,15 @@
 
 /* WHEN THIS TAKES EFFECT
  *
- * At application startup, and not again. GTK does not reload gtk.css when it changes -- measured,
- * not assumed -- so a scheme change reaches GTK applications started after it, while the ones
- * already open keep what they had. Everything else in wlRIX repaints immediately.
+ * Immediately, given `wlrix-gtk-config`. GTK itself reads gtk.css once during gtk_init and never
+ * again -- measured, not assumed, with the top-level file rewritten rather than an import target
+ * -- so that module keeps its own provider over the file, watches it, and reloads on change. It
+ * is what puts a GTK 3 window in step with the rest of the desktop, which repaints at once.
  *
- * One consequence of that, since the Settings portal started emitting `SettingChanged`: a
- * running GTK window *does* hear about a scheme change, and flips its dark hint on the spot
- * while the colors here stay on the scheme it started with. The mismatch is the price of every
- * other toolkit -- Chromium, Electron, Qt -- learning about the change at all, which they can
- * only do from that signal. Closing it properly needs a GTK 3 module to reload the CSS, the way
- * KDE's colorreload-gtk-module does; GTK 4 dropped modules and has no equivalent.
+ * Without the module loaded, the old behavior is what is left: a scheme change reaches GTK
+ * applications started after it and no others. Worth knowing, because the Settings portal does
+ * emit `SettingChanged`, so a running GTK window hears about the change and flips its dark hint
+ * whether or not the colors here can follow it.
  *
  * The button layout comes from the Settings portal, not from settings.ini: on Wayland GTK reads
  * `gtk-decoration-layout` from `org.freedesktop.impl.portal.Settings` and ignores the file.
@@ -63,7 +62,23 @@ headerbar,
 .titlebar {
   /* 30px is TITLEBAR_HEIGHT, and it is not negotiable: the button glyphs are positioned by
      whole-pixel offsets measured off the IRIX originals, so a taller bar would stretch the
-     assets and a shorter one would crop them. */
+     assets and a shorter one would crop them.
+
+     It is a floor, not a ceiling, and GTK 3 has a taller floor of its own: a GtkHeaderBar with
+     `has-subtitle` TRUE -- the default, and what most applications leave it at -- reserves a
+     second line of title text whether or not there is a subtitle to put in it, and comes out
+     **38px**. Measured: 38 with the property on and exactly 30 with it off, for an empty
+     headerbar, at any font size, with every CSS box property on every node in the bar zeroed.
+     The reservation is computed from the GtkSettings font rather than from the cascade, so no
+     stylesheet can reach it -- `min-height`, negative margins on the subtitle and on the label
+     box were all tried and all did nothing.
+
+     So a GTK 3 window's titlebar was 8px taller than the compositor's, and its buttons -- which
+     GtkHeaderBar centers vertically in code -- floated with 4px of the bar's face above and
+     below them. `wlrix-gtk-config`, the GTK 3 module, now clears the property as each headerbar
+     is built, which is the only way in; without that module loaded this bar is 38px again and
+     the declaration below is the floor rather than the height. GTK 4 has no such property and
+     lands on 30 either way. */
   min-height: 30px;
   padding: 0;
   margin: 0;
@@ -131,14 +146,35 @@ headerbar button.titlebutton,
 }
 
 /* Adwaita puts a themed icon in the button. Ours is the whole button, glyph included, so the
-   icon would draw a second symbol on top of it.
+   icon draws a second symbol on top of it -- our minimize box with GTK's white minimize bar
+   under it, which is what virt-manager showed.
+
+   It has to be the `image` node, not the button. The first attempt was `-gtk-icon-source: none`
+   on the button, which does nothing here for two reasons: a GTK 3 title button holds a real
+   GtkImage loaded from the icon theme (`storage=icon-name`, `window-minimize-symbolic`, read
+   off a live widget tree), and `-gtk-icon-source` feeds only CSS-rendered icons and is not
+   inherited. So it was a rule that parsed, matched, and could not have had an effect. The GTK 4
+   sheet had this right already, for the same reason spelled differently there.
 
    Close is the exception and keeps its own: wlRIX has no close glyph -- IRIX put Close in the
    window menu -- so that asset is the bare button face and GTK's symbol is what makes it
    readable. */
-headerbar button.titlebutton:not(.close),
-.titlebar button.titlebutton:not(.close) {
-  -gtk-icon-source: none;
+headerbar button.titlebutton:not(.close) image,
+.titlebar button.titlebutton:not(.close) image {
+  opacity: 0;
+}
+
+/* Close the gap between the buttons.
+
+   GtkHeaderBar packs its window controls into a GtkBox it builds in code with `spacing = 6`
+   (measured: minimize at x=354, maximize at x=390, both 30 wide). Box spacing is a widget
+   property with no CSS node behind it, so it cannot be set from here -- but a negative margin
+   on every button after the first cancels it exactly, and leaves the group still flush with the
+   right edge of the bar. The compositor's own frame butts its buttons together, so this is what
+   makes the two read as one frame. */
+headerbar button.titlebutton + button.titlebutton,
+.titlebar button.titlebutton + button.titlebutton {
+  margin-left: -6px;
 }
 
 /* Motif has no hover state: a titlebar button reacts to being pressed and to nothing else.
