@@ -23,10 +23,11 @@ sudo just install    # or `just install-assets` from wlrix-epoch
 
 Two directories are installed, to two different places:
 
-| Directory     | Installed to                      | Who reads it                                                              |
-|---------------|-----------------------------------|---------------------------------------------------------------------------|
-| `wallpapers/` | `$PREFIX/share/wlrix/wallpapers/` | `wlrix-bg`, by absolute path from its system default config.              |
-| `cursors/sgi` | `$PREFIX/share/icons/sgi/`        | every XCursor loader, by theme *name*: the compositor, GTK, Qt, XWayland. |
+| Directory     | Installed to                      | Who reads it                                                                 |
+|---------------|-----------------------------------|------------------------------------------------------------------------------|
+| `wallpapers/` | `$PREFIX/share/wlrix/wallpapers/` | `wlrix-bg`, by absolute path from its system default config.                 |
+| `cursors/sgi` | `$PREFIX/share/icons/sgi/`        | every XCursor loader, by theme *name*: the compositor, GTK, Qt, XWayland.    |
+| `icons/wlrix` | `$PREFIX/share/icons/wlrix/`      | every icon loader, by theme *name*: the file manager, the desktop, the tray. |
 
 A machine without the wallpapers comes up with a plain gray desktop and a line in the session log about the missing
 file. Without the cursor theme the pointer falls back to whatever theme the machine already has — usually Adwaita — and
@@ -38,8 +39,32 @@ and a couple of legacy paths, and nothing can point them at a private directory 
 than `/usr` therefore needs `XCURSOR_PATH` to include `$PREFIX/share/icons`**, which `install` says on the way out.
 
 `palette/` is deliberately not installed: it is a *build* input, resolved ahead of time by `tools/palettegen` into
-native sources that are checked in to the consuming repos, so that nothing parses it at runtime. `icons/` is still
-empty; when it is filled it will want the XDG icon-theme layout under `share/icons/`, the same way the cursors do.
+native sources that are checked in to the consuming repos, so that nothing parses it at runtime.
+
+## Icons
+
+`icons/wlrix/` is the IRIX icon set as an XDG icon theme. It is **incomplete on purpose and usable anyway**: its
+`index.theme` carries `Inherits=Adwaita,hicolor`, so a name it does not draw resolves to Adwaita's, and an icon added
+here simply starts winning over the one it replaces. There is no point at which the theme has to be finished before it
+can be switched on.
+
+Nothing uses it by default yet. A component is pointed at it by name — the file manager through
+`files.appearance.icon_theme` in `files.toml`, `wlrix-desktop` and `wlrix-tray` through their own settings — and each
+defaults to Adwaita until then.
+
+The layout is the spec's: `<theme>/<subdir>/<icon>.svg`, with every subdir declared in `index.theme`. A directory
+listed in `Directories=` with no group of its own below is skipped **silently** by every implementation, wlRIX's own
+included, so adding one means adding both. Today that is `scalable/places` and `scalable/mimetypes`, both
+`Type=Scalable` over 8–512px, because the art is SVG and one drawing serves a 16px listing row and a 48px desktop
+icon. A hand-tuned raster at a particular size would go in a sibling `48x48/` with `Type=Fixed`; the resolvers try
+`.png` before `.svg`, so it wins at that size without anything else changing.
+
+**Which name to draw is decided by shared-mime-info, not guessed.** A type resolves to a list of candidate names,
+most specific first: an explicit override from `/usr/share/mime/icons`, then the type with its slash turned into a
+dash, then the generic hint from `/usr/share/mime/generic-icons`, then `<media>-x-generic`. So a directory asks for
+`inode-directory` and then `folder` — both are provided here, the second as the real file and the first as a symlink
+to it, which saves a full failed search through Adwaita and hicolor on every miss. Aliases are kept as links and the
+install preserves them as links, the same way the cursor theme's are.
 
 ## Cursors
 
@@ -69,11 +94,11 @@ picking a larger frame, because there is not one.
 it the IRIX border and no titlebar and the client draws its own bar inside that frame; without
 this the bar is an Adwaita slab in an IRIX border.
 
-| Path | Written by |
-|------|------------|
-| `gtk-3.0/wlrix.css`, `gtk-4.0/wlrix.css` | by hand. Structure: sizes, resets, which nodes to reach. |
-| `gtk-3.0/schemes/<id>.css`, `gtk-4.0/schemes/<id>.css` | generated. Colors, and which asset goes on which button. |
-| `assets/<id>/*.svg` | generated. Twenty per scheme: four states each of menu, minimize, maximize, maximized and close. |
+| Path                                                   | Written by                                                                                       |
+|--------------------------------------------------------|--------------------------------------------------------------------------------------------------|
+| `gtk-3.0/wlrix.css`, `gtk-4.0/wlrix.css`               | by hand. Structure: sizes, resets, which nodes to reach.                                         |
+| `gtk-3.0/schemes/<id>.css`, `gtk-4.0/schemes/<id>.css` | generated. Colors, and which asset goes on which button.                                         |
+| `assets/<id>/*.svg`                                    | generated. Twenty per scheme: four states each of menu, minimize, maximize, maximized and close. |
 
 The generated half comes from **`wlrix-compositor --dump-gtk-theme`**, not from `palettegen`. Only
 the compositor knows what a titlebar button looks like, and `decoration_quads()` hands back the
@@ -83,7 +108,7 @@ factor in a way no screen capture would. Regenerate with `just gtk-theme` from `
 `just check-gtk-theme` fails if the checked-in output is stale.
 
 The bar itself has no asset. A Motif bevel is not a CSS border -- its top and bottom shadows run
-the full width and the left and right pair is inset between them, while a CSS border mitres its
+the full width and the left and right pair is inset between them, while a CSS border miters its
 corners -- but four inset `box-shadow`s draw it exactly, and then it takes its colors from
 `@define-color` instead of an image. A `border-image` nine-slice would have been the obvious
 answer and does not work: GTK 3 parses `border-image-slice: 2 fill` and ignores the `fill`,
@@ -120,12 +145,12 @@ The palette is the single source of truth for color across wlRIX. Nothing downst
 `tools/palettegen` resolves it ahead of time and emits native sources for each consumer, so the compositor and the apps
 cannot drift apart.
 
-| File                         | Id            | Gamma | Role                                                                 |
-|------------------------------|---------------|-------|----------------------------------------------------------------------|
-| `palette/classic.json`       | `classic`     | 1.7   | Default — Indigo Magic. `wlrix.palette.json` re-exports it.          |
-| `palette/classic-g10.json`   | `classic-g10` | 1.0   | Lightest bake.                                                       |
-| `palette/classic-g24.json`   | `classic-g24` | 2.4   | Darkest bake.                                                        |
-| `palette/gotham.json`        | `gotham`      | 1.7   | IRIX's dark scheme. 1.7 only — it was never baked for the other two. |
+| File                       | Id            | Gamma | Role                                                                 |
+|----------------------------|---------------|-------|----------------------------------------------------------------------|
+| `palette/classic.json`     | `classic`     | 1.7   | Default — Indigo Magic. `wlrix.palette.json` re-exports it.          |
+| `palette/classic-g10.json` | `classic-g10` | 1.0   | Lightest bake.                                                       |
+| `palette/classic-g24.json` | `classic-g24` | 2.4   | Darkest bake.                                                        |
+| `palette/gotham.json`      | `gotham`      | 1.7   | IRIX's dark scheme. 1.7 only — it was never baked for the other two. |
 
 The **id** is what a config file names (`[appearance] palette = "gotham"`) and what the settings daemon writes; a
 component given an id it does not ship falls back to `classic` and says so in its log.
@@ -155,12 +180,12 @@ just check-palette  # fail if the checked-in output is stale
 
 This writes:
 
-| Output                                                     | Consumer                                                        |
-|------------------------------------------------------------|-----------------------------------------------------------------|
-| `wlrix-avalonia/…/Schemes/<Scheme>.axaml`                   | one `ResourceDictionary` per scheme, merged by `WlrixTheme`.    |
-| `wlrix-avalonia/…/Schemes/Brushes.axaml`                    | one brush per color key, scheme-independent.                    |
-| `wlrix-avalonia/…/Schemes/SchemeCatalog.g.cs`               | `WlrixSchemes.All` — id, name, gamma, dark flag, resource URI.  |
-| `wlrix-ui/src/palette/generated.rs`                         | the `Palette` struct and one static per scheme, for every Rust component. |
+| Output                                        | Consumer                                                                  |
+|-----------------------------------------------|---------------------------------------------------------------------------|
+| `wlrix-avalonia/…/Schemes/<Scheme>.axaml`     | one `ResourceDictionary` per scheme, merged by `WlrixTheme`.              |
+| `wlrix-avalonia/…/Schemes/Brushes.axaml`      | one brush per color key, scheme-independent.                              |
+| `wlrix-avalonia/…/Schemes/SchemeCatalog.g.cs` | `WlrixSchemes.All` — id, name, gamma, dark flag, resource URI.            |
+| `wlrix-ui/src/palette/generated.rs`           | the `Palette` struct and one static per scheme, for every Rust component. |
 
 Those files are checked in, so neither build depends on the generator having been run; they carry a do-not-edit header.
 

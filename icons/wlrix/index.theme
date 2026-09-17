@@ -1,0 +1,42 @@
+[Icon Theme]
+Name=wlRIX
+Comment=IRIX Indigo Magic icons
+
+# Everything not drawn yet comes from Adwaita, and that is what makes a theme with one icon in
+# it usable rather than a desktop full of blanks. Every consumer resolves a name through this
+# list depth-first, so an icon added here simply starts winning over its Adwaita counterpart --
+# there is no step where the theme has to be "finished" before it can be switched on.
+#
+# hicolor last because the spec says every theme inherits it, and because an application's own
+# installed icon usually lives there rather than in any theme.
+Inherits=Adwaita,hicolor
+
+# A directory named here with no group of its own below is skipped, silently, by every
+# implementation including wlRIX's own. Adding a directory means adding both.
+Directories=scalable/places,scalable/mimetypes
+
+# What a chooser shows to represent the theme. The one icon there is, for now.
+Example=folder
+
+# Scalable rather than a size ladder: these are SVGs and they are rasterized on demand, so one
+# drawing serves 16px in a listing and 48px on the desktop. MinSize/MaxSize is the range a
+# lookup will accept this directory for -- outside it the search falls through to Adwaita,
+# which would be the wrong answer for a size we can render perfectly well. Hence a range wide
+# enough to cover everything anything asks for.
+#
+# When a hand-tuned raster icon is wanted at a particular size, it goes in a sibling `48x48`
+# directory with `Type=Fixed`: the resolver tries `.png` before `.svg`, so it will win at that
+# size without this needing to change.
+[scalable/places]
+Size=48
+MinSize=8
+MaxSize=512
+Type=Scalable
+Context=Places
+
+[scalable/mimetypes]
+Size=48
+MinSize=8
+MaxSize=512
+Type=Scalable
+Context=MimeTypes

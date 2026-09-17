@@ -18,6 +18,12 @@ wallpaperdir := sharedir / 'wallpapers'
 cursorname := 'sgi'
 icondir := usrdir / 'share' / 'icons'
 cursordir := icondir / cursorname
+# The icon theme goes beside it, for the same reason and to the same place: every icon loader
+# on the machine -- the `freedesktop-icons` crate the Rust components use, wlRIX's own
+# XdgIconTheme in the C# apps, and GTK and Qt for anything else running here -- finds a theme
+# by *name* under XDG_DATA_DIRS/icons and nowhere else.
+iconname := 'wlrix'
+iconthemedir := icondir / iconname
 # Where the theme is looked for at *runtime*, which is not where it is written when DESTDIR is
 # set: a staged install is assembled under rootdir and runs from prefix. Only the message at the
 # end of `install` uses this -- naming the staging directory there would be telling whoever
@@ -61,9 +67,7 @@ test:
 #   sources that are checked in to the consuming repos, precisely so nothing parses it at
 #   runtime; installing it would put a file on disk that nothing reads and that could drift
 #   from the baked values without anyone noticing.
-# - `icons/` is still empty. When it is filled it will want the XDG icon-theme layout under
-#   `share/icons/<theme>/`, which is where `freedesktop-icons` looks, the same way the cursor
-#   theme below does.
+# `icons/` is installed now too, under `share/icons/<theme>/` beside the cursors.
 #
 # Deliberately does not build -- there is nothing to build -- but it is still run as root, and
 # the other components' justfiles all say this in the same place:
@@ -102,6 +106,31 @@ install:
       fi
   done
   echo "installed {{cursordir}} ({{cursorname}} cursor theme)"
+
+  # The icon theme. Entry by entry and links kept as links, for the cursors' reason: a name a
+  # MIME type resolves to is often the same drawing under another name, and `install`
+  # dereferences -- so a recursive copy would write the same SVG out once per alias.
+  #
+  # index.theme is what makes this a theme rather than a directory of files. Without it every
+  # loader skips the whole tree, with no error anywhere, and the desktop quietly keeps using
+  # Adwaita.
+  install -Dm0644 icons/{{iconname}}/index.theme '{{iconthemedir}}'/index.theme
+  for d in icons/{{iconname}}/*/*/; do
+      sub="${d#icons/{{iconname}}/}"
+      install -d '{{iconthemedir}}'/"$sub"
+      for f in "$d"*; do
+          [ -e "$f" ] || continue
+          name="$(basename "$f")"
+          if [ -L "$f" ]; then
+              # Relative targets, so the link is correct wherever the theme lands, including a
+              # staged install under DESTDIR.
+              ln -sfn "$(readlink "$f")" '{{iconthemedir}}'/"$sub$name"
+          else
+              install -Dm0644 "$f" '{{iconthemedir}}'/"$sub$name"
+          fi
+      done
+  done
+  echo "installed {{iconthemedir}} ({{iconname}} icon theme)"
 
   # The GTK theme: the hand-written stylesheets, the generated per-scheme sheets, and the
   # titlebar assets. Copied wholesale rather than file by file -- unlike the cursors there are no
@@ -142,6 +171,8 @@ uninstall:
   # every other theme on the machine.
   rm -rf '{{cursordir}}'
   echo "removed {{cursordir}}"
+  rm -rf '{{iconthemedir}}'
+  echo "removed {{iconthemedir}}"
   # Ours alone; `share/themes` holds every other theme on the machine.
   rm -rf '{{themedir}}'
   echo "removed {{themedir}}"
