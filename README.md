@@ -59,6 +59,15 @@ included, so adding one means adding both. Today that is `scalable/places` and `
 icon. A hand-tuned raster at a particular size would go in a sibling `48x48/` with `Type=Fixed`; the resolvers try
 `.png` before `.svg`, so it wins at that size without anything else changing.
 
+**An icon whose name nothing asks for is invisible, and nothing reports it.** That is the one failure mode worth
+guarding against here: the file is present, it renders, and no type ever resolves to it. Three of the names below are
+another theme's vocabulary rather than this machine's -- `unknown`, `image-x-pixmap` and `image-jpeg2000` are Breeze's
+-- so each is kept as the drawing and given a link under the name shared-mime-info actually produces
+(`application-x-generic`, `image-x-xpixmap`, and `image-jp2`/`jpx`/`jpm`). To check a new one, resolve every type in
+`/usr/share/mime/types` through the same list and see whether the filename appears; add the `inode/*` types by hand,
+because the stat-derived ones are not in that file. `inode/x-empty` is the example: wlRIX Files names empty files that,
+where gio says `application/x-zerosize`, and nothing in the system list mentions either.
+
 **Which name to draw is decided by shared-mime-info, not guessed.** A type resolves to a list of candidate names,
 most specific first: an explicit override from `/usr/share/mime/icons`, then the type with its slash turned into a
 dash, then the generic hint from `/usr/share/mime/generic-icons`, then `<media>-x-generic`. So a directory asks for
