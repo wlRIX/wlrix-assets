@@ -14,6 +14,7 @@ everything renders identically.
 | `icons/`      | Icon theme (IRIX Indigo Magic icon set).                          |
 | `cursors/`    | Cursor theme (`sgi`, the IRIX pointer set).                       |
 | `wallpapers/` | Default wallpapers / backgrounds.                                 |
+| `images/`     | Pictures for minimized-window icons, one per application.         |
 
 ## Installing
 
@@ -21,11 +22,12 @@ everything renders identically.
 sudo just install    # or `just install-assets` from wlrix-epoch
 ```
 
-Two directories are installed, to two different places:
+Everything but `palette/` is installed, to three different places:
 
 | Directory     | Installed to                      | Who reads it                                                                 |
 |---------------|-----------------------------------|------------------------------------------------------------------------------|
 | `wallpapers/` | `$PREFIX/share/wlrix/wallpapers/` | `wlrix-bg`, by absolute path from its system default config.                 |
+| `images/`     | `$PREFIX/share/wlrix/images/`     | `wlrix-compositor`, by application id, for minimized-window icons.           |
 | `cursors/sgi` | `$PREFIX/share/icons/sgi/`        | every XCursor loader, by theme *name*: the compositor, GTK, Qt, XWayland.    |
 | `icons/wlrix` | `$PREFIX/share/icons/wlrix/`      | every icon loader, by theme *name*: the file manager, the desktop, the tray. |
 
@@ -40,6 +42,31 @@ than `/usr` therefore needs `XCURSOR_PATH` to include `$PREFIX/share/icons`**, w
 
 `palette/` is deliberately not installed: it is a *build* input, resolved ahead of time by `tools/palettegen` into
 native sources that are checked in to the consuming repos, so that nothing parses it at runtime.
+
+## Minimize pictures
+
+`images/` is the artwork the compositor draws in a minimized window's icon tile, the way 4Dwm did — fixed per
+application rather than a snapshot of what the window happened to be showing.
+
+A file is named for the window's **application id**: the Wayland `app_id`, or the X11 `WM_CLASS` for an XWayland
+client, plus `.png`. That is why the case is inconsistent here — `Blender.png` and `Lutris.png` are `WM_CLASS` names
+and capitalized, while `steam.png` and `microsoft-edge.png` are app ids and are not. The lookup retries
+case-insensitively, so either spelling finds either file, and **`default.png` answers for every application without
+artwork of its own**.
+
+**An alias is a relative symlink**, not a second copy: `Alacritty.png -> com.wlrix.terminal.png` is how a terminal
+emulator with no artwork of its own comes out looking like the wlRIX terminal rather than falling back to the default.
+`install` keeps links as links (it would otherwise dereference and write the whole picture out again per alias), and a
+link whose target has gone is skipped rather than drawn as a blank tile.
+
+The compositor searches `wlrix/images` on every XDG data directory, user first, so a file in
+`~/.local/share/wlrix/images/` overrides the one installed here. `pkill -HUP wlrix-compositor` picks up a change
+without a restart.
+
+Artwork is authored at **85×67**, the size of the well in the icon tile. Anything else is scaled to cover that
+rectangle and center-cropped — it fills the well rather than sitting letterboxed inside it — so a picture at a
+different aspect ratio loses its edges rather than being squashed. PNG only: the compositor builds `wlrix-ui` with its
+`png` feature and not its `svg` one.
 
 ## Icons
 

@@ -10,6 +10,11 @@ usrdir := absolute_path(clean(rootdir / prefix))
 # `share/backgrounds`, which is a distribution's to arrange and not ours to add to.
 sharedir := usrdir / 'share' / 'wlrix'
 wallpaperdir := sharedir / 'wallpapers'
+# The pictures on minimized-window icons, one per application id plus a `default.png`. Beside
+# the wallpapers rather than under `share/icons`, because nothing resolves these by icon-theme
+# name: `wlrix-compositor` looks them up by app id under `wlrix/images` on the XDG data path,
+# and a user overrides one by dropping a file in `~/.local/share/wlrix/images`.
+imagedir := sharedir / 'images'
 
 # The cursor theme goes under `share/icons/<theme>/`, **not** under `share/wlrix`, because that
 # is the only place an XCursor loader looks: libXcursor, libwayland-cursor and the `xcursor`
@@ -60,14 +65,13 @@ test:
 
 # Install the shared data files.
 #
-# **`wallpapers/` and `cursors/`.** The other two directories are deliberately not installed,
-# for different reasons each:
+# Everything here is installed except `palette/`, which is a *build* input: `tools/palettegen`
+# resolves it ahead of time into native sources that are checked in to the consuming repos,
+# precisely so nothing parses it at runtime. Installing it would put a file on disk that
+# nothing reads and that could drift from the baked values without anyone noticing.
 #
-# - `palette/` is a *build* input. `tools/palettegen` resolves it ahead of time into native
-#   sources that are checked in to the consuming repos, precisely so nothing parses it at
-#   runtime; installing it would put a file on disk that nothing reads and that could drift
-#   from the baked values without anyone noticing.
-# `icons/` is installed now too, under `share/icons/<theme>/` beside the cursors.
+# `icons/` goes under `share/icons/<theme>/` beside the cursors; `images/` under
+# `share/wlrix/` beside the wallpapers.
 #
 # Deliberately does not build -- there is nothing to build -- but it is still run as root, and
 # the other components' justfiles all say this in the same place:
@@ -84,6 +88,30 @@ install:
       [ -e "$f" ] || continue
       install -Dm0644 "$f" '{{wallpaperdir}}'/"$(basename "$f")"
       echo "installed {{wallpaperdir}}/$(basename "$f")"
+  done
+
+  # The minimized-window icon pictures. PNG only: the compositor builds with `wlrix-ui`'s
+  # `png` feature and not its `svg` one, so an SVG dropped here would be found by name and
+  # then silently fail to decode.
+  #
+  # **Links stay links**, the way the cursor and icon themes below do, and for the same
+  # reason: an alias here is one drawing under a second name -- `Alacritty.png` pointing at
+  # `com.wlrix.terminal.png`, because a terminal emulator with no artwork of its own should
+  # look like the wlRIX one rather than fall back to `default.png`. `install` dereferences,
+  # so a plain loop would write the whole 11K picture out again per alias.
+  install -d '{{imagedir}}'
+  for f in images/*.png; do
+      [ -e "$f" ] || continue
+      name="$(basename "$f")"
+      if [ -L "$f" ]; then
+          # Relative targets, all within this one directory, so the link is correct wherever
+          # the pictures land -- including a staged install under DESTDIR.
+          ln -sfn "$(readlink "$f")" '{{imagedir}}'/"$name"
+          echo "linked {{imagedir}}/$name -> $(readlink "$f")"
+      else
+          install -Dm0644 "$f" '{{imagedir}}'/"$name"
+          echo "installed {{imagedir}}/$name"
+      fi
   done
 
   # The cursor theme, entry by entry rather than `cp -r`, because **the symlinks have to stay
@@ -164,9 +192,10 @@ uninstall:
   #!/usr/bin/env bash
   set -euo pipefail
   rm -rf '{{wallpaperdir}}'
+  rm -rf '{{imagedir}}'
   # Only if this left it empty: `share/wlrix` may hold something else by then.
   rmdir '{{sharedir}}' 2>/dev/null || true
-  echo "removed the wlRIX wallpapers"
+  echo "removed the wlRIX wallpapers and icon pictures"
   # Our own theme directory only. `share/icons` itself belongs to the distribution and holds
   # every other theme on the machine.
   rm -rf '{{cursordir}}'
