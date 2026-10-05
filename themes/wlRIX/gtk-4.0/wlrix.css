@@ -211,6 +211,18 @@ popover > contents {
   color: @window_fg_color;
 }
 
+/* A notebook page. Adwaita paints it with a literal and sets no color of its own, so the text on
+   it is inherited from the window above -- which is the scheme's. Left alone, that is the scheme's
+   text on Adwaita's page, and the two only agree while the widget variant matches the scheme:
+   pavucontrol under Gotham, with the light variant loaded, drew its device names white on white.
+   wlrix-settings-daemon now keeps the variant in step, but an application may still pick its own,
+   so the page takes both colors from the scheme rather than one from each. An IRIX tab page is a
+   panel, not a field, so these are the window's. */
+notebook > stack:not(:only-child) {
+  background-color: @window_bg_color;
+  color: @window_fg_color;
+}
+
 /* Where text is entered or listed: IRIX gave those their own background rather than the panel's,
    which is what makes a field read as a field. */
 entry,
