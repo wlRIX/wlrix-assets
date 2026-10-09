@@ -75,9 +75,9 @@ different aspect ratio loses its edges rather than being squashed. PNG only: the
 here simply starts winning over the one it replaces. There is no point at which the theme has to be finished before it
 can be switched on.
 
-Nothing uses it by default yet. A component is pointed at it by name — the file manager through
-`files.appearance.icon_theme` in `files.toml`, `wlrix-desktop` and `wlrix-tray` through their own settings — and each
-defaults to Adwaita until then.
+It is the default everywhere wlRIX looks an icon up: the file manager and the file picker through
+`files.appearance.icon_theme` in `files.toml`, `wlrix-desktop` and `wlrix-tray` through their own `icon_theme`
+settings. Each of those can name another theme, or `""` for hicolor alone.
 
 The layout is the spec's: `<theme>/<subdir>/<icon>.svg`, with every subdir declared in `index.theme`. A directory
 listed in `Directories=` with no group of its own below is skipped **silently** by every implementation, wlRIX's own
