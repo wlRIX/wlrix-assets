@@ -70,6 +70,13 @@ public static class Emit
         ("WlrixSelectFill",           "selectFill"),
         ("WlrixIndicatorLight",       "indicatorLight"),
 
+        // Icon state: an icon's light body at rest (stippled with white), under the pointer
+        // and selected. The same three the Rust side's `icon_state` reads, so a selected file
+        // in wlRIX Files is the yellow of a selected icon on the desktop.
+        ("WlrixIconTint",             "iconTint"),
+        ("WlrixIconTintHover",        "iconTintHover"),
+        ("WlrixIconTintSelected",     "iconTintSelected"),
+
         // Status / links
         ("WlrixError",                "error"),
         ("WlrixWarning",              "warning"),
