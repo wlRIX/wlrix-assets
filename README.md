@@ -102,6 +102,11 @@ dash, then the generic hint from `/usr/share/mime/generic-icons`, then `<media>-
 to it, which saves a full failed search through Adwaita and hicolor on every miss. Aliases are kept as links and the
 install preserves them as links, the same way the cursor theme's are.
 
+`user-trash` and `user-trash-full` are IRIX's dumpster, empty and full, for `wlrix-desktop`'s Dumpster. They sit in
+`places` with the folder rather than splitting `-full` into a `status` directory of its own: every lookup is by name, so
+the context directory changes nothing but the size of `index.theme`. Their lids and garbage come from IRIX's dumpster
+icon, which was only those overlay layers. The body under them, and the empty icon's left lid, are drawn to match.
+
 ## Cursors
 
 `cursors/sgi/` is the IRIX pointer set as an XCursor theme: 49 cursors at 32×32, plus 72 symlinked aliases covering the
