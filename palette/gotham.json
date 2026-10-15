@@ -150,6 +150,8 @@
     "iconTint": "imdLightGrey",
     "iconTintHover": "imdWhite",
     "iconTintSelected": "selectFillColor",
+    "iconTintGhost": "imdDarkGrey",
+    "iconTintDrop": "blueColor",
     "iconLabel": "imdWhite",
     "iconLabelSelected": "imdBlack",
     "dragOutline": "redColor",

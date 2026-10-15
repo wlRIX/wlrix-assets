@@ -120,6 +120,11 @@ CLASSIC_ROLES = {
     "iconTint":             "imdLightGrey",
     "iconTintHover":        "imdWhite",
     "iconTintSelected":     "selectFillColor",           # *lampColor
+    # Mid-drag, after the IRIX Interactive Desktop UI Guidelines' figure of icon
+    # states: the dark gray ghost left where a dragged icon was picked up, and
+    # the royal blue of an icon that will accept what is dragged over it.
+    "iconTintGhost":        "imdDarkGrey",
+    "iconTintDrop":         "blueColor",
     # The filename under the icon. Selected labels invert onto the tint.
     "iconLabel":            "imdWhite",
     "iconLabelSelected":    "imdBlack",

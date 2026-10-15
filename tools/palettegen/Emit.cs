@@ -76,6 +76,10 @@ public static class Emit
         ("WlrixIconTint",             "iconTint"),
         ("WlrixIconTintHover",        "iconTintHover"),
         ("WlrixIconTintSelected",     "iconTintSelected"),
+        // Mid-drag: the dark gray ghost left where a dragged icon was, and the royal blue of
+        // an icon that will take what is dropped on it.
+        ("WlrixIconTintGhost",        "iconTintGhost"),
+        ("WlrixIconTintDrop",         "iconTintDrop"),
 
         // Status / links
         ("WlrixError",                "error"),

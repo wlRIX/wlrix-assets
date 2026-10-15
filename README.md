@@ -106,6 +106,9 @@ install preserves them as links, the same way the cursor theme's are.
 `places` with the folder rather than splitting `-full` into a `status` directory of its own: every lookup is by name, so
 the context directory changes nothing but the size of `index.theme`. Their lids and garbage come from IRIX's dumpster
 icon, which was only those overlay layers. The body under them, and the empty icon's left lid, are drawn to match.
+`wlrix-dumpster-open` is the third state, the lid flung open with an icon going in, which the desktop shows while icons
+are dragged over the Dumpster. The spec has no name for that, hence the `wlrix-` prefix; the desktop asks for it ahead
+of the other two, so a theme without it shows the Dumpster as it was, tinted blue.
 
 ## Cursors
 
