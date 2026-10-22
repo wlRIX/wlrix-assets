@@ -15,6 +15,9 @@ wallpaperdir := sharedir / 'wallpapers'
 # name: `wlrix-compositor` looks them up by app id under `wlrix/images` on the XDG data path,
 # and a user overrides one by dropping a file in `~/.local/share/wlrix/images`.
 imagedir := sharedir / 'images'
+# Stock account pictures, offered by User Accounts (`wlrix-settings-users`). Square PNGs; a user
+# adds their own by dropping one in `~/.local/share/wlrix/avatars`.
+avatardir := sharedir / 'avatars'
 
 # The cursor theme goes under `share/icons/<theme>/`, **not** under `share/wlrix`, because that
 # is the only place an XCursor loader looks: libXcursor, libwayland-cursor and the `xcursor`
@@ -114,6 +117,13 @@ install:
       fi
   done
 
+  install -d '{{avatardir}}'
+  for f in avatars/*.png; do
+      [ -e "$f" ] || continue
+      install -Dm0644 "$f" '{{avatardir}}'/"$(basename "$f")"
+      echo "installed {{avatardir}}/$(basename "$f")"
+  done
+
   # The cursor theme, entry by entry rather than `cp -r`, because **the symlinks have to stay
   # symlinks**. 72 of the theme's 121 entries are links -- the legacy X11 names, the MD5-named
   # ones themes use for drag-and-drop, and the modern CSS names -- pointing at 49 real files.
@@ -193,9 +203,10 @@ uninstall:
   set -euo pipefail
   rm -rf '{{wallpaperdir}}'
   rm -rf '{{imagedir}}'
+  rm -rf '{{avatardir}}'
   # Only if this left it empty: `share/wlrix` may hold something else by then.
   rmdir '{{sharedir}}' 2>/dev/null || true
-  echo "removed the wlRIX wallpapers and icon pictures"
+  echo "removed the wlRIX wallpapers, icon pictures and account pictures"
   # Our own theme directory only. `share/icons` itself belongs to the distribution and holds
   # every other theme on the machine.
   rm -rf '{{cursordir}}'

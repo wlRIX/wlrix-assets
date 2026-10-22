@@ -15,6 +15,7 @@ everything renders identically.
 | `cursors/`    | Cursor theme (`sgi`, the IRIX pointer set).                       |
 | `wallpapers/` | Default wallpapers / backgrounds.                                 |
 | `images/`     | Pictures for minimized-window icons, one per application.         |
+| `avatars/`    | Stock account pictures, square.                                    |
 
 ## Installing
 
@@ -28,6 +29,7 @@ Everything but `palette/` is installed, to three different places:
 |---------------|-----------------------------------|------------------------------------------------------------------------------|
 | `wallpapers/` | `$PREFIX/share/wlrix/wallpapers/` | `wlrix-bg`, by absolute path from its system default config.                 |
 | `images/`     | `$PREFIX/share/wlrix/images/`     | `wlrix-compositor`, by application id, for minimized-window icons.           |
+| `avatars/`    | `$PREFIX/share/wlrix/avatars/`    | User Accounts (`wlrix-settings-users`), as the pictures it offers.           |
 | `cursors/sgi` | `$PREFIX/share/icons/sgi/`        | every XCursor loader, by theme *name*: the compositor, GTK, Qt, XWayland.    |
 | `icons/wlrix` | `$PREFIX/share/icons/wlrix/`      | every icon loader, by theme *name*: the file manager, the desktop, the tray. |
 
