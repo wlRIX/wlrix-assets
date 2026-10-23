@@ -83,10 +83,22 @@ settings. Each of those can name another theme, or `""` for hicolor alone.
 
 The layout is the spec's: `<theme>/<subdir>/<icon>.svg`, with every subdir declared in `index.theme`. A directory
 listed in `Directories=` with no group of its own below is skipped **silently** by every implementation, wlRIX's own
-included, so adding one means adding both. Today that is `scalable/places` and `scalable/mimetypes`, both
-`Type=Scalable` over 8–512px, because the art is SVG and one drawing serves a 16px listing row and a 48px desktop
+included, so adding one means adding both. Today that is `scalable/places`, `scalable/mimetypes`,
+`scalable/devices` and `scalable/apps`, all `Type=Scalable` over 8–512px, because the art is SVG and one drawing serves a 16px listing row and a 48px desktop
 icon. A hand-tuned raster at a particular size would go in a sibling `48x48/` with `Type=Fixed`; the resolvers try
 `.png` before `.svg`, so it wins at that size without anything else changing.
+
+`scalable/devices` draws hardware under the freedesktop device names, `input-mouse` and `input-keyboard` so far. The
+same drawings are the Mouse and Keyboard settings panels' own icons, which those applications install into hicolor
+under their application ids (`com.wlrix.settings.mouse`) so they show whichever theme is chosen. The copies are kept in
+step by hand. `scalable/apps` does the same for applications under their generic role names: the Writer's closed
+drawing is `accessories-text-editor` here and `com.wlrix.writer` in its own install.
+
+An application symbol drawn in the IRIX export frame -- a 50pt square over a `0 0 50 50` view box, as every drawing
+here is -- is laid over its magic carpet 1:1 by the desktop and the icon catalog, in register, the way IRIX composed
+them; that is how the Writer's closed symbol erases lines written on the carpet's paper. An ordinary theme icon is
+shrunk and stood on the carpet instead. Like every drawing here, they carry the SVG namespace, which the IRIX-era exports lacked and the resvg
+behind the C# loaders requires.
 
 **An icon whose name nothing asks for is invisible, and nothing reports it.** That is the one failure mode worth
 guarding against here: the file is present, it renders, and no type ever resolves to it. Three of the names below are

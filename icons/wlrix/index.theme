@@ -13,7 +13,7 @@ Inherits=Adwaita,hicolor
 
 # A directory named here with no group of its own below is skipped, silently, by every
 # implementation including wlRIX's own. Adding a directory means adding both.
-Directories=scalable/places,scalable/mimetypes
+Directories=scalable/places,scalable/mimetypes,scalable/devices,scalable/apps
 
 # What a chooser shows to represent the theme. The one icon there is, for now.
 Example=folder
@@ -40,3 +40,21 @@ MinSize=8
 MaxSize=512
 Type=Scalable
 Context=MimeTypes
+
+# Hardware, by the freedesktop device names: what a Bluetooth mouse or keyboard is drawn as,
+# and the same drawings the Mouse and Keyboard settings panels ship as their own icons.
+[scalable/devices]
+Size=48
+MinSize=8
+MaxSize=512
+Type=Scalable
+Context=Devices
+
+# Applications, by the freedesktop generic names (accessories-text-editor): the drawing a
+# wlRIX application ships under its own id, given to whatever else asks for the role.
+[scalable/apps]
+Size=48
+MinSize=8
+MaxSize=512
+Type=Scalable
+Context=Applications
