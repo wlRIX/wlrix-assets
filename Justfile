@@ -18,6 +18,9 @@ imagedir := sharedir / 'images'
 # Stock account pictures, offered by User Accounts (`wlrix-settings-users`). Square PNGs; a user
 # adds their own by dropping one in `~/.local/share/wlrix/avatars`.
 avatardir := sharedir / 'avatars'
+# The world map across the top of the International panel (`wlrix-settings-international`):
+# NASA's Blue Marble, equirectangular, so a time zone's latitude and longitude are its place on it.
+mapdir := sharedir / 'maps'
 
 # The cursor theme goes under `share/icons/<theme>/`, **not** under `share/wlrix`, because that
 # is the only place an XCursor loader looks: libXcursor, libwayland-cursor and the `xcursor`
@@ -124,6 +127,13 @@ install:
       echo "installed {{avatardir}}/$(basename "$f")"
   done
 
+  install -d '{{mapdir}}'
+  for f in maps/*.jpg; do
+      [ -e "$f" ] || continue
+      install -Dm0644 "$f" '{{mapdir}}'/"$(basename "$f")"
+      echo "installed {{mapdir}}/$(basename "$f")"
+  done
+
   # The cursor theme, entry by entry rather than `cp -r`, because **the symlinks have to stay
   # symlinks**. 72 of the theme's 121 entries are links -- the legacy X11 names, the MD5-named
   # ones themes use for drag-and-drop, and the modern CSS names -- pointing at 49 real files.
@@ -204,9 +214,10 @@ uninstall:
   rm -rf '{{wallpaperdir}}'
   rm -rf '{{imagedir}}'
   rm -rf '{{avatardir}}'
+  rm -rf '{{mapdir}}'
   # Only if this left it empty: `share/wlrix` may hold something else by then.
   rmdir '{{sharedir}}' 2>/dev/null || true
-  echo "removed the wlRIX wallpapers, icon pictures and account pictures"
+  echo "removed the wlRIX wallpapers, icon pictures, account pictures and map"
   # Our own theme directory only. `share/icons` itself belongs to the distribution and holds
   # every other theme on the machine.
   rm -rf '{{cursordir}}'

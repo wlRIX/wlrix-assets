@@ -16,6 +16,7 @@ everything renders identically.
 | `wallpapers/` | Default wallpapers / backgrounds.                                 |
 | `images/`     | Pictures for minimized-window icons, one per application.         |
 | `avatars/`    | Stock account pictures, square.                                    |
+| `maps/`       | The world map in the International panel (NASA Blue Marble).      |
 
 ## Installing
 
@@ -30,6 +31,7 @@ Everything but `palette/` is installed, to three different places:
 | `wallpapers/` | `$PREFIX/share/wlrix/wallpapers/` | `wlrix-bg`, by absolute path from its system default config.                 |
 | `images/`     | `$PREFIX/share/wlrix/images/`     | `wlrix-compositor`, by application id, for minimized-window icons.           |
 | `avatars/`    | `$PREFIX/share/wlrix/avatars/`    | User Accounts (`wlrix-settings-users`), as the pictures it offers.           |
+| `maps/`       | `$PREFIX/share/wlrix/maps/`       | the International panel (`wlrix-settings-international`), behind its buttons. |
 | `cursors/sgi` | `$PREFIX/share/icons/sgi/`        | every XCursor loader, by theme *name*: the compositor, GTK, Qt, XWayland.    |
 | `icons/wlrix` | `$PREFIX/share/icons/wlrix/`      | every icon loader, by theme *name*: the file manager, the desktop, the tray. |
 
@@ -69,6 +71,16 @@ Artwork is authored at **85×67**, the size of the well in the icon tile. Anythi
 rectangle and center-cropped — it fills the well rather than sitting letterboxed inside it — so a picture at a
 different aspect ratio loses its edges rather than being squashed. PNG only: the compositor builds `wlrix-ui` with its
 `png` feature and not its `svg` one.
+
+## World map
+
+`maps/world-map.jpg` is the map across the top of the International panel, where IRIX's ipanel had a satellite map of
+its own. It is NASA's **Blue Marble: Next Generation**, July 2004 (`world.200407.3x5400x2700.jpg` from NASA Visible
+Earth, by Reto Stöckli, NASA Earth Observatory), scaled from 5400×2700 to 1600×800. NASA imagery is not under
+copyright; it is credited here as NASA asks.
+
+The projection is equirectangular — longitude −180° at the left edge, latitude 90° at the top — which is what lets the
+panel put a time zone's marker on it from tzdata's coordinates alone. A replacement has to keep that, and the 2:1 shape.
 
 ## Icons
 
