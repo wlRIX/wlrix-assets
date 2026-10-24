@@ -60,10 +60,15 @@ Type=Scalable
 Context=Applications
 
 # Status indicators, under the `-symbolic` names the tray items ask for (wlrix-bluetooth's
-# `bluetooth-*-symbolic`, wlrix-network's `network-wireless-*-symbolic`). Drawn in color rather than as symbolic art: the
-# tray paints an icon as the file says, with no recoloring, so Adwaita's fixed #2e3436 is
-# close to invisible on the Gotham panel. A white face inside a black outline reads on a light
-# panel and a dark one alike, the way the Indigo Magic icons always did.
+# `bluetooth-*-symbolic`, wlrix-network's `network-wireless-*-symbolic`, wlrix-power's and
+# UPower's `battery-*-symbolic`, fcitx5's `input-keyboard-symbolic`). The keyboard is a device
+# rather than a status, but it is here because it is drawn for the tray: the large isometric
+# `input-keyboard` in `scalable/devices` is a different picture.
+#
+# Drawn in color rather than as symbolic art: the tray paints an icon as the file says, with no
+# recoloring, so Adwaita's fixed #2e3436 is close to invisible on the Gotham panel. A white face
+# inside a black outline reads on a light panel and a dark one alike, the way the Indigo Magic
+# icons always did.
 #
 # Drawn on a 22-unit grid, the tray's default icon size, so the strokes land on whole pixels
 # there.
