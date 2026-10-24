@@ -104,7 +104,10 @@ icon. A hand-tuned raster at a particular size would go in a sibling `48x48/` wi
 same drawings are the Mouse and Keyboard settings panels' own icons, which those applications install into hicolor
 under their application ids (`com.wlrix.settings.mouse`) so they show whichever theme is chosen. The copies are kept in
 step by hand. `scalable/apps` does the same for applications under their generic role names: the Writer's closed
-drawing is `accessories-text-editor` here and `com.wlrix.writer` in its own install.
+drawing is `accessories-text-editor` here and `com.wlrix.writer` in its own install. Another application's icon can be
+drawn here too, under the name its own entry asks for: `firefox`, with `org.mozilla.firefox` (the Flatpak's) and
+`firefox-esr` as links to it. The wlrix theme is searched before hicolor, where an application installs its own, so the
+drawing here wins.
 
 An application symbol drawn in the IRIX export frame -- a 50pt square over a `0 0 50 50` view box, as every drawing
 here is -- is laid over its magic carpet 1:1 by the desktop and the icon catalog, in register, the way IRIX composed
