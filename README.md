@@ -139,6 +139,22 @@ icon, which was only those overlay layers. The body under them, and the empty ic
 are dragged over the Dumpster. The spec has no name for that, hence the `wlrix-` prefix; the desktop asks for it ahead
 of the other two, so a theme without it shows the Dumpster as it was, tinted blue.
 
+## File types
+
+`mime/wlrix.xml` is a shared-mime-info package for file types the system database does not know. A file whose name
+matches nothing there is `application/octet-stream`, which draws as the blank unknown-file page, and no icon can fix
+that: there is no type for an icon name to come from. Each type here exists because a file showed that page, and
+today they are C# work: `text/x-msbuild-project+xml` for `*.csproj`, `*.fsproj` and `*.vbproj`, and
+`text/x-dotnet-solution+xml` for `*.slnx`.
+
+They are XML underneath, so each is a subclass of `application/xml` and names `application-xml` as its generic icon
+in the package itself rather than through a link in the icon theme. That way the icon follows whichever theme is
+chosen, as long as it draws XML.
+
+`just install` puts the package under `share/mime/packages/` and runs `update-mime-database`, because nothing reads
+the XML directly: every reader, wlRIX Files included, loads the compiled `globs2` and `generic-icons`. A staged
+install skips that step and leaves it to the distribution's package hook.
+
 ## Cursors
 
 `cursors/sgi/` is the IRIX pointer set as an XCursor theme: 49 cursors at 32×32, plus 72 symlinked aliases covering the

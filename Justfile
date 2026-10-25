@@ -54,6 +54,11 @@ themename := 'wlRIX'
 themedir := usrdir / 'share' / 'themes' / themename
 runtime-themedir := clean(prefix / 'share' / 'themes')
 
+# File types shared-mime-info does not know, so they get an icon instead of the blank
+# unknown-file page. A package under `share/mime/packages/`, which `update-mime-database`
+# compiles into the files every reader actually loads.
+mimedir := usrdir / 'share' / 'mime'
+
 # List available recipes.
 default:
   @just --list
@@ -200,6 +205,17 @@ install:
   done
   echo "installed {{themedir}} ({{themename}} GTK theme)"
 
+  # The MIME package. Nothing reads the XML itself: it has to be compiled into the database's
+  # globs and generic-icons files before any application sees the types. Done here for a direct
+  # install; a staged one (rootdir set) leaves it to the distribution, whose package hook runs
+  # the same command over the real directory once the files are in place.
+  install -Dm0644 mime/wlrix.xml '{{mimedir}}'/packages/wlrix.xml
+  echo "installed {{mimedir}}/packages/wlrix.xml"
+  if [ -z '{{rootdir}}' ] && command -v update-mime-database >/dev/null; then
+      update-mime-database '{{mimedir}}'
+      echo "updated the MIME database in {{mimedir}}"
+  fi
+
   echo
   echo "The compositor's default config names the {{cursorname}} theme. It is found by name"
   echo "under share/icons on any XDG data directory -- so a prefix other than /usr needs"
@@ -227,6 +243,13 @@ uninstall:
   # Ours alone; `share/themes` holds every other theme on the machine.
   rm -rf '{{themedir}}'
   echo "removed {{themedir}}"
+  # The package only, then a recompile so its types leave the database too. `share/mime` is
+  # shared-mime-info's.
+  rm -f '{{mimedir}}'/packages/wlrix.xml
+  echo "removed {{mimedir}}/packages/wlrix.xml"
+  if [ -z '{{rootdir}}' ] && command -v update-mime-database >/dev/null; then
+      update-mime-database '{{mimedir}}'
+  fi
 
 clean:
   @echo "nothing to clean: {{name}} is data"

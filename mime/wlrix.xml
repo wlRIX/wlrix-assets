@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  File types shared-mime-info does not know, installed as share/mime/packages/wlrix.xml.
+
+  Each one exists because a file of it showed the wrong icon: with no type, a name the
+  database has never heard of is application/octet-stream, and that draws as the blank
+  unknown-file page. They are XML underneath, so each is a subclass of application/xml and
+  names application-xml as its generic icon. The icon comes from the package rather than
+  from a link in the icon theme, so it follows whatever theme is chosen, as long as that
+  theme draws XML.
+
+  update-mime-database has to run after this is installed or removed; until it does, nothing
+  reads it. `just install` runs it, and a distribution's package hook does the same.
+-->
+<mime-info xmlns="http://www.freedesktop.org/standards/shared-mime-info">
+  <!-- C#, F# and Visual Basic projects are one format, MSBuild's, so they are one type. -->
+  <mime-type type="text/x-msbuild-project+xml">
+    <comment>MSBuild project</comment>
+    <comment xml:lang="ja">MSBuild プロジェクト</comment>
+    <sub-class-of type="application/xml"/>
+    <generic-icon name="application-xml"/>
+    <glob pattern="*.csproj"/>
+    <glob pattern="*.fsproj"/>
+    <glob pattern="*.vbproj"/>
+  </mime-type>
+
+  <!-- The XML solution format. The older .sln is not XML and is left alone. -->
+  <mime-type type="text/x-dotnet-solution+xml">
+    <comment>.NET solution</comment>
+    <comment xml:lang="ja">.NET ソリューション</comment>
+    <sub-class-of type="application/xml"/>
+    <generic-icon name="application-xml"/>
+    <glob pattern="*.slnx"/>
+  </mime-type>
+</mime-info>
