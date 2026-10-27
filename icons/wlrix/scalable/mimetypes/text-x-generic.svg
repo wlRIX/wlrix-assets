@@ -202,10 +202,10 @@
 </g>
 <g
    id="g1408"
-   style="fill:#808080;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-miterlimit:4"
+   style="fill:#000000;fill-opacity:75%;fill-rule:nonzero;stroke:none;stroke-miterlimit:4"
    transform="matrix(0.486709,0.000000,0.000000,0.491272,2.930617,-0.171761)">
 		<path
    d="M 32.500000,100.00000 L 22.500000,95.000000 L 68.500000,72.000000 L 77.500000,77.000000 L 32.500000,100.00000 z "
    id="path1312"
-   style="fill:#808080;fill-opacity:1" />
+   style="fill:#000000;fill-opacity:75%" />
 	</g></svg>

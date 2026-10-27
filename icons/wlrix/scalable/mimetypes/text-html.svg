@@ -181,11 +181,11 @@
            inkscape:connector-curvature="0"
            id="path86"
            d="M 77.29,19.23 61.8,11.78 35.1,25.26 35.24,51.88 61.8,65.42 73.72,58.86" /></g></g></g><g
-     style="fill:#999999;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-miterlimit:4"
+     style="fill:#000000;fill-opacity:75%;fill-rule:nonzero;stroke:none;stroke-miterlimit:4"
      id="Icon Shadow"
      transform="matrix(0.66639435,0.01905195,-0.01905195,0.66639435,3.1997275,-0.51632559)"><path
        inkscape:connector-curvature="0"
        id="path7"
        d="m 32.5,100 -10,-5 46,-23 9,5 z"
-       style="fill:#999999;fill-opacity:1" /></g></g>
+       style="fill:#000000;fill-opacity:75%" /></g></g>
 </svg>

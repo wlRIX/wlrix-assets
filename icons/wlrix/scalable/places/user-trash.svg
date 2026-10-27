@@ -2,7 +2,7 @@
 <!-- IRIX Indigo Magic dumpster. Lids and garbage from the IRIX icon; body drawn for wlRIX. Empty: both lids shut. -->
 <svg xmlns="http://www.w3.org/2000/svg" width="50pt" height="50pt" viewBox="0 0 50 50">
 <g transform="scale(0.5)" stroke="#000000" stroke-miterlimit="4" stroke-linejoin="round">
-	<path id="Shadow" d="M24.5 72L48.14 93L34 99.5L9 79z" fill="#808080" stroke="none"/>
+	<path id="Shadow" d="M24.5 72L48.14 93L34 99.5L9 79z" style="fill:#000000;fill-opacity:75%" stroke="none"/>
 	<path id="Body Left" d="M21.86 41.75L48.14 64.43L48.14 93L24.5 72z" fill="#b4b4b4"/>
 	<path id="Body Right" d="M48.14 64.43L96.18 40.72L93.5 71L48.14 93z" fill="#8c8c8c"/>
 	<path id="Inside" d="M21.86 41.75L69.9 18.04L96.18 40.72L48.14 64.43z" fill="#404040"/>

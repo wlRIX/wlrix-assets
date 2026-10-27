@@ -639,13 +639,13 @@
 
 
 <g
-   style="fill:#808080;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-miterlimit:4"
+   style="fill:#000000;fill-opacity:75%;fill-rule:nonzero;stroke:none;stroke-miterlimit:4"
    id="g2587"
    transform="matrix(0.5,0,0,0.5,1.3715853,-4.3547004e-2)">
 		<path
    id="path11166"
    d="M 38.83,99.78 L 22,90.88 L 60.55,71.22 L 77.82,79.8 L 38.83,99.78 z"
-   style="fill:#808080;fill-opacity:1" />
+   style="fill:#000000;fill-opacity:75%" />
 	</g><g
    style="fill:#918a6f;fill-opacity:1;stroke:#000000;stroke-miterlimit:4"
    id="g2590"

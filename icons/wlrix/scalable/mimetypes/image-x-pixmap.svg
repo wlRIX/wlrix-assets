@@ -42,10 +42,10 @@
      transform="scale(0.5)"
      id="g93"><g
        id="Icon Shadow"
-       style="fill-rule:nonzero;clip-rule:nonzero;fill:#C0C0C0;stroke:none;stroke-miterlimit:4;fill-opacity:50%;"><path
+       style="fill-rule:nonzero;clip-rule:nonzero;fill:#000000;stroke:none;stroke-miterlimit:4;fill-opacity:75%;"><path
          d="M32.50 100L22.50 95L68.50 72L77.50 77z"
          id="path2"
-         style="fill:#999999" /></g><g
+         style="fill:#000000;fill-opacity:75%" /></g><g
        id="Icon"
        style="fill-rule:none;clip-rule:nonzero;fill:#FFFFFF;stroke:#000000;stroke-miterlimit:4;fill-opacity:100%;"><path
          d="M27.50 87L27.50 22L72.50 0L72.50 65z"

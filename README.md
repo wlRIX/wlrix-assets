@@ -146,6 +146,16 @@ is `application-x-executable`, the magic carpet itself; AppImages reach it throu
 too. The spreadsheet is `x-office-spreadsheet`, the hint every spreadsheet type carries, from `.ods` and the Excel
 formats to CSV, since no installed theme draws a specific one.
 
+`folder` is IRIX's plain white folder. Its body is all white, so the desktop's state tint (stippled, white, yellow,
+the blue of a drop target) colors the whole folder evenly; a manila folder kept its tan back panel through every
+state, because only the light body is tinted. `folder-open` is IRIX's open state, the spec's name for a folder being
+browsed. Nothing asks for it yet. It is here for a file manager that marks the directories it has open, the way the
+magic carpet marks a running application.
+
+Every drop shadow is IRIX's: black at 75% opacity (`fill:#000000;fill-opacity:75%`), so the background shows through
+it. Drawings redrawn in Inkscape and some from other sources came with an opaque gray (`#808080`, `#999999`) instead,
+which reads as a flat gray slab on a dark desktop. A new drawing's shadow is brought to the same style when it is added.
+
 `user-trash` and `user-trash-full` are IRIX's dumpster, empty and full, for `wlrix-desktop`'s Dumpster. They sit in
 `places` with the folder rather than splitting `-full` into a `status` directory of its own: every lookup is by name, so
 the context directory changes nothing but the size of `index.theme`. Their lids and garbage come from IRIX's dumpster

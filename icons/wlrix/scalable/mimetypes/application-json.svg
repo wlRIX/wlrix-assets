@@ -391,7 +391,7 @@
      id="normalize-50"
      inkscape:label="50x50 viewBox"
      transform="matrix(0.75,0,0,0.75,10.25,0)"><path
-     style="fill:#808080;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1.34995985;stroke-miterlimit:4;stroke-opacity:1"
+     style="fill:#000000;fill-opacity:75%;fill-rule:nonzero;stroke:none;stroke-width:1.34995985;stroke-miterlimit:4;stroke-opacity:1"
      d="M 11.99963,66.422999 0.63971831,60.415678 26.660194,47.145572 38.317098,52.9369 Z"
      id="path7"
      inkscape:connector-curvature="0" /><g
