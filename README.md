@@ -100,7 +100,14 @@ included, so adding one means adding both. Today that is `scalable/places`, `sca
 icon. A hand-tuned raster at a particular size would go in a sibling `48x48/` with `Type=Fixed`; the resolvers try
 `.png` before `.svg`, so it wins at that size without anything else changing.
 
-`scalable/devices` draws hardware under the freedesktop device names, `input-mouse` and `input-keyboard` so far. The
+`scalable/devices` draws hardware under the freedesktop device names. A drive and the medium in it are two names, the
+way GVfs asks for them: the empty drive is `drive-optical` or `drive-removable-media-floppy`, and the drive with a disc
+or floppy loaded is `media-optical` or `media-floppy`. A hard disk has no medium to load, so its two IRIX states are
+mounted (`drive-harddisk`) and unmounted (`drive-harddisk-unmounted`, a wlRIX name that falls back to `drive-harddisk`
+in any other theme by the spec's dash rule). The floptical drive stands in for every other removable drive, a USB
+stick included, as `drive-removable-media` with `media-removable` linked to it. `camera-web` is the IndyCam, and
+`audio-input-microphone` the microphone, linked as `microphone`, Adwaita's name for it. `input-mouse` and
+`input-keyboard` are the two drawings shared with an application. Those
 same drawings are the Mouse and Keyboard settings panels' own icons, which those applications install into hicolor
 under their application ids (`com.wlrix.settings.mouse`) so they show whichever theme is chosen. The copies are kept in
 step by hand. `scalable/apps` does the same for applications under their generic role names: the Writer's closed
@@ -130,6 +137,14 @@ dash, then the generic hint from `/usr/share/mime/generic-icons`, then `<media>-
 `inode-directory` and then `folder` — both are provided here, the second as the real file and the first as a symlink
 to it, which saves a full failed search through Adwaita and hicolor on every miss. Aliases are kept as links and the
 install preserves them as links, the same way the cursor theme's are.
+
+A generic drawing loses to any theme's specific one, because every lookup tries a type's first name in every theme
+before its next name. So the disk image is drawn under the specific names, not under `media-optical`, the hint
+shared-mime-info gives ISO images: `application-vnd.efi.iso` is the drawing, linked as the old ISO aliases, the other
+CD images and the raw and virtual machine disk images (`vnd.efi.img`, qcow2, VDI, VHD, VMDK, Apple's). The executable
+is `application-x-executable`, the magic carpet itself; AppImages reach it through their hint, and are linked by name
+too. The spreadsheet is `x-office-spreadsheet`, the hint every spreadsheet type carries, from `.ods` and the Excel
+formats to CSV, since no installed theme draws a specific one.
 
 `user-trash` and `user-trash-full` are IRIX's dumpster, empty and full, for `wlrix-desktop`'s Dumpster. They sit in
 `places` with the folder rather than splitting `-full` into a `status` directory of its own: every lookup is by name, so

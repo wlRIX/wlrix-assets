@@ -42,7 +42,9 @@ Type=Scalable
 Context=MimeTypes
 
 # Hardware, by the freedesktop device names: what a Bluetooth mouse or keyboard is drawn as,
-# and the same drawings the Mouse and Keyboard settings panels ship as their own icons.
+# and the same drawings the Mouse and Keyboard settings panels ship as their own icons. The
+# drives follow GVfs's split: `drive-*` is the empty drive, `media-*` the drive with something
+# loaded, and `drive-harddisk-unmounted` is the one state of our own.
 [scalable/devices]
 Size=48
 MinSize=8
