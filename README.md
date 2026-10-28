@@ -213,6 +213,7 @@ this the bar is an Adwaita slab in an IRIX border.
 | `gtk-3.0/wlrix.css`, `gtk-4.0/wlrix.css`               | by hand. Structure: sizes, resets, which nodes to reach.                                         |
 | `gtk-3.0/schemes/<id>.css`, `gtk-4.0/schemes/<id>.css` | generated. Colors, and which asset goes on which button.                                         |
 | `assets/<id>/*.svg`                                    | generated. Twenty per scheme: four states each of menu, minimize, maximize, maximized and close. |
+| `assets/check.svg`, `assets/check-disabled.svg`        | by hand. The check box's red check, the same shapes as Wlrix.Avalonia's; shared by every scheme. |
 
 The generated half comes from **`wlrix-compositor --dump-gtk-theme`**, not from `palettegen`. Only
 the compositor knows what a titlebar button looks like, and `decoration_quads()` hands back the

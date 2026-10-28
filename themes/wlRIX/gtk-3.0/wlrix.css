@@ -12,9 +12,10 @@
  * frame. Structurally that is right; visually the headerbar is an Adwaita bar sitting in an IRIX
  * border. These rules make it the titlebar row the compositor would have drawn.
  *
- * So this styles the titlebar and nothing else. The border around it is ours already, and the
- * widgets inside keep Adwaita's shape and only take the scheme's colors. A full Motif widget
- * theme is a separate job.
+ * So this styles the titlebar, and beyond it only a little: the scheme's colors on the window
+ * body, the selection, and the check box, which is drawn as IRIX's. The border around it all is
+ * ours already, and other widgets keep Adwaita's shape. A full Motif widget theme is a separate
+ * job.
  *
  * WHY THE BEVEL IS FOUR SHADOWS
  *
@@ -234,8 +235,9 @@ window.csd .titlebar:first-child {
    SCSS with its colors written out as literals and never reads the name back. So a window stays
    Adwaita's near-white however the color is redefined, and it takes a rule to move it.
 
-   These are the main surfaces and nothing else. Widgets keep Adwaita's shape; only the palette
-   moves. A Motif widget theme is the counterpart of Wlrix.Avalonia and is its own job. */
+   These are the main surfaces. Widgets keep Adwaita's shape and only the palette moves, except
+   the check box, drawn as IRIX's below. A Motif widget theme is the counterpart of
+   Wlrix.Avalonia and is its own job. */
 
 window,
 window.background,
@@ -267,4 +269,97 @@ treeview.view,
 list {
   background-color: @theme_base_color;
   color: @theme_text_color;
+}
+
+/* ---------------------------------------------------------------------------------------- */
+/* Selection                                                                                 */
+/* ---------------------------------------------------------------------------------------- */
+
+/* The rule above gives `treeview.view` the field color, and a rule in the user's gtk.css
+   outranks the theme's whatever the specificity -- so it painted over Adwaita's
+   `treeview.view:selected` too, and a selected row looked exactly like every other one.
+   virt-manager's machine list showed nothing at all for a click. The selected states are named
+   again here so they win the same way, in the scheme's selection color as Wlrix.Avalonia
+   draws it.
+
+   No hover color, deliberately: IRIX lists do not follow the pointer, and neither do the
+   Avalonia apps' (see TableView.axaml). */
+treeview.view:selected,
+treeview.view:selected:focus,
+treeview.view:selected:backdrop,
+.view:selected,
+.view:selected:focus,
+.view:selected:backdrop,
+iconview:selected,
+list > row:selected,
+list > row:selected:focus,
+list > row:selected:backdrop,
+flowboxchild:selected,
+selection,
+entry selection,
+textview text selection,
+label selection {
+  background-color: @theme_selected_bg_color;
+  color: @theme_selected_fg_color;
+}
+
+/* ---------------------------------------------------------------------------------------- */
+/* Check boxes                                                                               */
+/* ---------------------------------------------------------------------------------------- */
+
+/* IRIX's toggle, as Wlrix.Avalonia's CheckBox.axaml draws it: a raised square in the face
+   color that lightens under the pointer and while checked, with the red check in it. Checking
+   does not sink it -- IRIX's stayed raised, and the lighter face is what lets the red show.
+
+   Four inset shadows and a ring, as the titlebar does it, rather than a border: the ring is the
+   one-pixel outer line, and the shadows inside it are the two-pixel bevel. The ring is listed
+   first so it paints over the bevel's ends at the corners. The colors are the palette's, from
+   schemes/<id>.css; the lit edge of a hovered or checked box is lighter than any color a scheme
+   names, so it is mixed toward white, the same 42% as the Avalonia theme's translucent edge.
+
+   Every `check`, wherever it sits: a check button, a check menu item, a toggle column in a
+   tree view. */
+check {
+  min-width: 15px;
+  min-height: 15px;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background-color: @wlrix_face;
+  background-image: none;
+  -gtk-icon-source: none;
+  -gtk-icon-shadow: none;
+  box-shadow: inset 0 0 0 1px @borders,
+              inset 3px 0 0 0 @wlrix_face_top_shadow, inset 0 3px 0 0 @wlrix_face_top_shadow,
+              inset -3px 0 0 0 @wlrix_face_bottom_shadow, inset 0 -3px 0 0 @wlrix_face_bottom_shadow;
+}
+
+check:hover,
+check:checked {
+  background-color: @wlrix_face_top_shadow;
+  box-shadow: inset 0 0 0 1px @borders,
+              inset 3px 0 0 0 mix(@wlrix_face_top_shadow, white, 0.42),
+              inset 0 3px 0 0 mix(@wlrix_face_top_shadow, white, 0.42),
+              inset -3px 0 0 0 @wlrix_face_bottom_shadow, inset 0 -3px 0 0 @wlrix_face_bottom_shadow;
+}
+
+check:checked {
+  -gtk-icon-source: url("../assets/check.svg");
+}
+
+/* IRIX had no third state, so a mixed box keeps the plain filled square Wlrix.Avalonia gives
+   it: sunken, with the dark face showing. */
+check:indeterminate {
+  background-color: @wlrix_face_bottom_shadow;
+  -gtk-icon-source: none;
+  box-shadow: inset 0 0 0 1px @borders,
+              inset 3px 0 0 0 @wlrix_face_bottom_shadow, inset 0 3px 0 0 @wlrix_face_bottom_shadow,
+              inset -3px 0 0 0 @wlrix_face_top_shadow, inset 0 -3px 0 0 @wlrix_face_top_shadow;
+}
+
+/* Disabled: the check fades, so a box that cannot be changed reads as such rather than merely
+   as checked. A faded copy of the picture rather than an icon effect: GTK 3 does not apply
+   -gtk-icon-effect to a check's built-in drawing (measured: the check came out full red). */
+check:disabled:checked {
+  -gtk-icon-source: url("../assets/check-disabled.svg");
 }

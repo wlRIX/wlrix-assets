@@ -198,8 +198,9 @@ window.csd > .background {
    SCSS with its colors written out as literals and never reads the name back. So a window stays
    Adwaita's near-white however the color is redefined, and it takes a rule to move it.
 
-   These are the main surfaces and nothing else. Widgets keep Adwaita's shape; only the palette
-   moves. A Motif widget theme is the counterpart of Wlrix.Avalonia and is its own job. */
+   These are the main surfaces. Widgets keep Adwaita's shape and only the palette moves, except
+   the check box, drawn as IRIX's below. A Motif widget theme is the counterpart of
+   Wlrix.Avalonia and is its own job. */
 
 window,
 window.background,
@@ -232,4 +233,82 @@ treeview.view,
 list {
   background-color: @view_bg_color;
   color: @view_fg_color;
+}
+
+/* ---------------------------------------------------------------------------------------- */
+/* Selection                                                                                 */
+/* ---------------------------------------------------------------------------------------- */
+
+/* The rule above gives the list views the field color, and a rule in the user's gtk.css
+   outranks the theme's whatever the specificity -- so it painted over Adwaita's selected rows
+   too, and a selection looked exactly like every other row. The selected states are named again
+   here so they win the same way, in the scheme's selection color as Wlrix.Avalonia draws it.
+
+   No hover color, deliberately: IRIX lists do not follow the pointer, and neither do the
+   Avalonia apps' (see TableView.axaml). */
+treeview.view:selected,
+treeview.view:selected:focus,
+treeview.view:selected:backdrop,
+.view:selected,
+listview > row:selected,
+columnview > listview > row:selected,
+list > row:selected,
+gridview > child:selected,
+flowboxchild:selected,
+selection,
+text selection,
+label selection {
+  background-color: @accent_bg_color;
+  color: @accent_fg_color;
+}
+
+/* ---------------------------------------------------------------------------------------- */
+/* Check boxes                                                                               */
+/* ---------------------------------------------------------------------------------------- */
+
+/* IRIX's toggle, as Wlrix.Avalonia's CheckBox.axaml draws it; see the GTK 3 sheet for why it
+   is drawn this way. GTK 4 sizes the icon by -gtk-icon-size rather than by the node, so that is
+   set as well. */
+check {
+  min-width: 15px;
+  min-height: 15px;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background-color: @wlrix_face;
+  background-image: none;
+  -gtk-icon-source: none;
+  -gtk-icon-size: 15px;
+  -gtk-icon-shadow: none;
+  box-shadow: inset 0 0 0 1px @borders,
+              inset 3px 0 0 0 @wlrix_face_top_shadow, inset 0 3px 0 0 @wlrix_face_top_shadow,
+              inset -3px 0 0 0 @wlrix_face_bottom_shadow, inset 0 -3px 0 0 @wlrix_face_bottom_shadow;
+}
+
+check:hover,
+check:checked {
+  background-color: @wlrix_face_top_shadow;
+  box-shadow: inset 0 0 0 1px @borders,
+              inset 3px 0 0 0 mix(@wlrix_face_top_shadow, white, 0.42),
+              inset 0 3px 0 0 mix(@wlrix_face_top_shadow, white, 0.42),
+              inset -3px 0 0 0 @wlrix_face_bottom_shadow, inset 0 -3px 0 0 @wlrix_face_bottom_shadow;
+}
+
+check:checked {
+  -gtk-icon-source: url("../assets/check.svg");
+}
+
+check:indeterminate {
+  background-color: @wlrix_face_bottom_shadow;
+  -gtk-icon-source: none;
+  box-shadow: inset 0 0 0 1px @borders,
+              inset 3px 0 0 0 @wlrix_face_bottom_shadow, inset 0 3px 0 0 @wlrix_face_bottom_shadow,
+              inset -3px 0 0 0 @wlrix_face_top_shadow, inset 0 -3px 0 0 @wlrix_face_top_shadow;
+}
+
+/* Disabled: the check fades, so a box that cannot be changed reads as such rather than merely
+   as checked. A faded copy of the picture rather than an icon effect: GTK 3 does not apply
+   -gtk-icon-effect to a check's built-in drawing (measured: the check came out full red). */
+check:disabled:checked {
+  -gtk-icon-source: url("../assets/check-disabled.svg");
 }

@@ -9,6 +9,12 @@
 @define-color wlrix_title_inactive #5c5c5c;
 @define-color wlrix_title_inactive_text #a1a1a1;
 
+@define-color wlrix_face #494949;
+@define-color wlrix_face_top_shadow #8a8a8a;
+@define-color wlrix_face_bottom_shadow #202020;
+@define-color wlrix_check #ff0000;
+@define-color wlrix_disabled_check #949494;
+
 @define-color theme_bg_color #2a2a2a;
 @define-color theme_fg_color #ffffff;
 @define-color theme_base_color #474747;

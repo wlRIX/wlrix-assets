@@ -196,6 +196,12 @@ install:
           install -Dm0644 "$f" '{{themedir}}'/"$d"/schemes/"$(basename "$f")"
       done
   done
+  # The scheme-independent widget pictures (the check box's check) sit beside the per-scheme
+  # directories rather than in one of them.
+  install -d '{{themedir}}/assets'
+  for f in themes/{{themename}}/assets/*.svg; do
+      install -Dm0644 "$f" '{{themedir}}/assets'/"$(basename "$f")"
+  done
   for d in themes/{{themename}}/assets/*/; do
       scheme="$(basename "$d")"
       install -d '{{themedir}}/assets'/"$scheme"
