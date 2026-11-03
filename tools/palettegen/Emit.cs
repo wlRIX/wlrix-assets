@@ -81,6 +81,14 @@ public static class Emit
         ("WlrixIconTintGhost",        "iconTintGhost"),
         ("WlrixIconTintDrop",         "iconTintDrop"),
 
+        // A minimized window's 4Dwm icon tile, as the compositor draws it: a raised face in the
+        // inactive frame's shadows around a sunken well. For the iconbox, which draws the same
+        // tile for each minimized window it lists.
+        ("WlrixIconTileFace",         "iconTileFace"),
+        ("WlrixIconWell",             "iconWell"),
+        ("WlrixTitleInactiveTopShadow",    "titleInactiveTopShadow"),
+        ("WlrixTitleInactiveBottomShadow", "titleInactiveBottomShadow"),
+
         // Status / links
         ("WlrixError",                "error"),
         ("WlrixWarning",              "warning"),
@@ -154,6 +162,14 @@ public static class Emit
         foreach (var (key, _) in SchemeKeys)
             sb.AppendLine($"    <SolidColorBrush x:Key=\"{key}\" Color=\"{{DynamicResource {key}Color}}\" />");
 
+        // Not a palette role, but it lives in this file, so it is emitted here: hand-editing a
+        // generated file loses the edit on the next run.
+        sb.AppendLine();
+        sb.AppendLine("    <!-- The lit edges of a hovered or checked check box, in CheckBox and in menus. Translucent");
+        sb.AppendLine("         white rather than a scheme color, because the face there is already TopShadow, the");
+        sb.AppendLine("         lightest tone a scheme names, and the edge has to be lighter still. Over Classic's");
+        sb.AppendLine("         #e5e5e5 face this gives IRIX's #f0f0f0. -->");
+        sb.AppendLine("    <SolidColorBrush x:Key=\"WlrixCheckBoxLitEdge\" Color=\"#6bffffff\" />");
         sb.AppendLine("</ResourceDictionary>");
         return sb.ToString();
     }
